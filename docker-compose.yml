@@ -22,7 +22,7 @@ services:
     # container is started. NOTE: It does not guarantee the database is ready.
     depends_on:
       mssql-db:
-        condition: service_started
+        condition: service_healthy
     # Automatically restart the container unless it was manually stopped.
     restart: unless-stopped
 
@@ -41,13 +41,22 @@ services:
     # Map the host port to the container's SQL Server port (1433).
     ports:
       - "${DB_PORT}:1433"
-    # Use a named volume to persist database data even if the container is removed.
+    # Use a named volume for data and mount our custom initialization scripts.
     volumes:
       - mssql-data:/var/opt/mssql
+      - ./mssql:/usr/src/app
     # Define the network for communication with the user-service.
     networks:
       - crm-network
-    # Healthcheck is temporarily removed for debugging.
+    # Define the custom command to run our initialization script.
+    command: /bin/bash /usr/src/app/run-init.sh
+    # Healthcheck is re-enabled to work with the custom init script.
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -N -C
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     # Automatically restart the container.
     restart: unless-stopped
 

@@ -38,6 +38,14 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
 
+        <!-- JDBC Starter for Flyway Compatibility -->
+        <!-- Flyway requires a JDBC DataSource to run migrations, even in a reactive (R2DBC) project. -->
+        <!-- This dependency provides the necessary infrastructure for Flyway without interfering with R2DBC. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
         <!-- Database -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
