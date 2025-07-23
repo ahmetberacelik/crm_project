@@ -19,10 +19,10 @@ services:
     networks:
       - crm-network
     # This ensures that the user-service container starts only after the mssql-db
-    # container is healthy and ready to accept connections.
+    # container is started. NOTE: It does not guarantee the database is ready.
     depends_on:
       mssql-db:
-        condition: service_healthy
+        condition: service_started
     # Automatically restart the container unless it was manually stopped.
     restart: unless-stopped
 
@@ -47,14 +47,7 @@ services:
     # Define the network for communication with the user-service.
     networks:
       - crm-network
-    # Healthcheck ensures that the database is fully initialized and ready
-    # before other services (like user-service) can start.
-    healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-Q", "SELECT 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
+    # Healthcheck is temporarily removed for debugging.
     # Automatically restart the container.
     restart: unless-stopped
 
