@@ -7,17 +7,24 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents a record in the 'users' table.
  * This entity is used for internal company staff members like administrators or support agents.
+ * Implements UserDetails to integrate with Spring Security.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("users")
-public class User {
+public class User implements UserDetails {
 
     /**
      * The unique identifier for the user.
@@ -68,4 +75,39 @@ public class User {
      */
     @Column("expertise_level")
     private String expertiseLevel;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role));
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 } 
