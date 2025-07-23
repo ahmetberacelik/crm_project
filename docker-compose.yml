@@ -1,0 +1,69 @@
+services:
+  # User Service Application
+  user-service:
+    # Build the Docker image for the user-service.
+    # The 'context' is set to the project root directory ('.') so that the Dockerfile
+    # can access both the parent pom.xml and the user-service module.
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    # The container name for easier identification.
+    container_name: user-service
+    # Read environment variables from the .env file in the root directory.
+    env_file:
+      - .env
+    # Map the host port to the container port. Uses the variable from .env.
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    # Define the network this service will connect to.
+    networks:
+      - crm-network
+    # This ensures that the user-service container starts only after the mssql-db
+    # container is healthy and ready to accept connections.
+    depends_on:
+      mssql-db:
+        condition: service_healthy
+    # Automatically restart the container unless it was manually stopped.
+    restart: unless-stopped
+
+  # Microsoft SQL Server Database
+  mssql-db:
+    # Use the official Microsoft SQL Server 2019 image for Linux.
+    image: "mcr.microsoft.com/mssql/server:2019-latest"
+    # The container name for the database service.
+    container_name: mssql-db
+    # Set environment variables required for MS SQL Server.
+    # 'ACCEPT_EULA=Y' is mandatory.
+    # The SA password is read securely from the .env file.
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    # Map the host port to the container's SQL Server port (1433).
+    ports:
+      - "${DB_PORT}:1433"
+    # Use a named volume to persist database data even if the container is removed.
+    volumes:
+      - mssql-data:/var/opt/mssql
+    # Define the network for communication with the user-service.
+    networks:
+      - crm-network
+    # Healthcheck ensures that the database is fully initialized and ready
+    # before other services (like user-service) can start.
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD}", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    # Automatically restart the container.
+    restart: unless-stopped
+
+# Define the shared network for inter-service communication.
+networks:
+  crm-network:
+    driver: bridge
+
+# Define the named volume for data persistence.
+volumes:
+  mssql-data:
+    driver: local 
