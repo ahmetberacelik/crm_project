@@ -38,6 +38,13 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
 
+        <!-- Flyway Database Support -->
+        <!-- This dependency provides the specific implementation for Microsoft SQL Server. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-sqlserver</artifactId>
+        </dependency>
+
         <!-- JDBC Starter for Flyway Compatibility -->
         <!-- Flyway requires a JDBC DataSource to run migrations, even in a reactive (R2DBC) project. -->
         <!-- This dependency provides the necessary infrastructure for Flyway without interfering with R2DBC. -->
