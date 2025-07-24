@@ -4,6 +4,7 @@ import com.crm.user.api.dto.request.LoginRequest;
 import com.crm.user.api.dto.request.RegisterRequest;
 import com.crm.user.api.dto.response.AuthResponse;
 import com.crm.user.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +28,7 @@ public class AuthController {
      * @return A Mono emitting the authentication response with a JWT.
      */
     @PostMapping("/login")
-    public Mono<AuthResponse> login(@RequestBody LoginRequest request) {
+    public Mono<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
@@ -37,7 +38,7 @@ public class AuthController {
      * @return A Mono emitting the authentication response with a JWT.
      */
     @PostMapping("/register/customer")
-    public Mono<AuthResponse> registerCustomer(@RequestBody RegisterRequest request) {
+    public Mono<AuthResponse> registerCustomer(@Valid @RequestBody RegisterRequest request) {
         return authService.registerCustomer(request);
     }
 } 

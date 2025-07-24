@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * Represents the data transfer object for a registration request.
@@ -19,16 +22,21 @@ public class RegisterRequest {
     /**
      * The full name of the person registering.
      */
+    @NotBlank(message = "Name cannot be blank")
     private String name;
 
     /**
      * The email address, which will be used for login.
      */
+    @NotBlank(message = "Email cannot be blank")
+    @Email(message = "Email should be valid")
     private String email;
 
     /**
      * The plain-text password. It will be hashed before being stored.
      */
+    @NotBlank(message = "Password cannot be blank")
+    @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
     /**
