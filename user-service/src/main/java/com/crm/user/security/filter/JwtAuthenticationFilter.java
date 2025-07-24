@@ -27,16 +27,16 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        final String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return chain.filter(exchange);
         }
 
-        String jwt = authHeader.substring(7);
-        String userEmail = jwtUtil.extractUsername(jwt);
+        final String jwt = authHeader.substring(7);
+        final String userEmail = jwtUtil.extractUsername(jwt);
 
-        if (userEmail != null && ReactiveSecurityContextHolder.getContext() == null) {
+        if (userEmail != null) {
             return userDetailsService.findByUsername(userEmail)
                     .flatMap(userDetails -> {
                         if (jwtUtil.isTokenValid(jwt, userDetails)) {
@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter implements WebFilter {
                             );
                         }
                         return chain.filter(exchange);
-                    });
+                    }).switchIfEmpty(chain.filter(exchange));
         }
         return chain.filter(exchange);
     }
