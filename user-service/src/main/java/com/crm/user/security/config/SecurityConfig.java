@@ -14,6 +14,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import reactor.core.publisher.Mono;
 
 /**
@@ -24,12 +26,10 @@ import reactor.core.publisher.Mono;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserRepository userRepository;
     private final CustomerRepository customerRepository;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, UserRepository userRepository, CustomerRepository customerRepository) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    public SecurityConfig(UserRepository userRepository, CustomerRepository customerRepository) {
         this.userRepository = userRepository;
         this.customerRepository = customerRepository;
     }
@@ -50,15 +50,26 @@ public class SecurityConfig {
 
 
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    @Order(1)
+    public SecurityWebFilterChain publicApiFilterChain(ServerHttpSecurity http) {
         return http
+                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/api/auth/**"))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-                .authorizeExchange(authorize -> authorize
-                        .pathMatchers("/api/v1/auth/**").permitAll()
-                        .anyExchange().authenticated()
-                )
+                .authorizeExchange(authorize -> authorize.anyExchange().permitAll())
+                .build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityWebFilterChain privateApiFilterChain(ServerHttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) {
+        return http
+                .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/api/**"))
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .authorizeExchange(authorize -> authorize.anyExchange().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }

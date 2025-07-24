@@ -5,6 +5,7 @@ import com.crm.user.api.dto.request.RegisterRequest;
 import com.crm.user.api.dto.response.AuthResponse;
 import com.crm.user.data.entity.Customer;
 import com.crm.user.data.repository.CustomerRepository;
+import com.crm.user.data.repository.UserRepository;
 import com.crm.user.security.jwt.JwtUtil;
 import com.crm.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final ReactiveUserDetailsService userDetailsService;
     private final CustomerRepository customerRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -49,29 +51,27 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Mono<AuthResponse> registerCustomer(RegisterRequest request) {
-        // Check if a user with this email already exists in either users or customers table.
-        return userDetailsService.findByUsername(request.getEmail())
-                .hasElement() // Emits true if a user is found, false otherwise
-                .flatMap(exists -> {
-                    if (exists) {
-                        // If the email is already in use, return an error
+        Mono<Boolean> userExists = userRepository.findByEmail(request.getEmail()).hasElement();
+        Mono<Boolean> customerExists = customerRepository.findByEmail(request.getEmail()).hasElement();
+
+        return Mono.zip(userExists, customerExists)
+                .flatMap(tuple -> {
+                    boolean anyExists = tuple.getT1() || tuple.getT2();
+                    if (anyExists) {
                         return Mono.error(new RuntimeException("Email already in use: " + request.getEmail()));
                     }
 
-                    // If email is not in use, create a new Customer entity
                     Customer newCustomer = Customer.builder()
                             .name(request.getName())
                             .email(request.getEmail())
                             .phone(request.getPhone())
-                            .passwordHash(passwordEncoder.encode(request.getPassword())) // Hash the password
-                            .role("CUSTOMER") // Set default role
+                            .passwordHash(passwordEncoder.encode(request.getPassword()))
+                            .role("CUSTOMER")
                             .createdAt(LocalDateTime.now())
                             .build();
 
-                    // Save the new customer to the database
                     return customerRepository.save(newCustomer)
                             .map(savedCustomer -> {
-                                // After saving, generate a JWT for the new customer
                                 String token = jwtUtil.generateToken(savedCustomer);
                                 return new AuthResponse(token);
                             });
