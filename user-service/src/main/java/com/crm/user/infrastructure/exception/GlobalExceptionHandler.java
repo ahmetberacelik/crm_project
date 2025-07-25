@@ -2,6 +2,8 @@ package com.crm.user.infrastructure.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -55,5 +57,25 @@ public class GlobalExceptionHandler {
 
         ErrorResponse errorResponse = responseBuilder.statusCode(status.value()).build();
         return Mono.just(new ResponseEntity<>(errorResponse, status));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .message("An unexpected error occurred: " + ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(Exception ex) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .statusCode(HttpStatus.UNAUTHORIZED.value())
+                .message("Invalid email or password.") // Keep the message generic for security
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 } 

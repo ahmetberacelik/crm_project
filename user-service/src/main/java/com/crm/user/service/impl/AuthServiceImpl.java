@@ -9,7 +9,11 @@ import com.crm.user.data.repository.UserRepository;
 import com.crm.user.security.jwt.JwtUtil;
 import com.crm.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -24,7 +28,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final ReactiveUserDetailsService userDetailsService;
+    private final ReactiveAuthenticationManager authenticationManager;
     private final CustomerRepository customerRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,21 +36,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Mono<AuthResponse> login(LoginRequest request) {
-        // Use the generic userDetailsService to find the user (can be User or Customer)
-        return userDetailsService.findByUsername(request.getEmail())
-                .flatMap(userDetails -> {
-                    // Check if the provided password matches the stored hashed password
-                    if (passwordEncoder.matches(request.getPassword(), userDetails.getPassword())) {
-                        // If passwords match, generate a JWT
-                        String token = jwtUtil.generateToken(userDetails);
-                        return Mono.just(new AuthResponse(token));
-                    } else {
-                        // If passwords don't match, return an error
-                        return Mono.error(new RuntimeException("Invalid credentials"));
-                    }
-                })
-                // If no user is found with the email, return the same generic error
-                .switchIfEmpty(Mono.error(new RuntimeException("Invalid credentials")));
+        return authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        ).map(authentication -> {
+            String token = jwtUtil.generateToken((org.springframework.security.core.userdetails.UserDetails) authentication.getPrincipal());
+            return new AuthResponse(token);
+        });
     }
 
     @Override
