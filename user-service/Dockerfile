@@ -12,6 +12,9 @@ COPY pom.xml .
 # Copy the user-service module's pom.xml
 COPY user-service/pom.xml ./user-service/
 
+# Copy ticket-service pom to satisfy parent modules list
+COPY ticket-service/pom.xml ./ticket-service/
+
 # Download all dependencies into the local Maven repository.
 # This step is cached by Docker, so it only runs again if the pom files change.
 RUN mvn -f user-service/pom.xml dependency:go-offline

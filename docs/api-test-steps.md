@@ -116,3 +116,95 @@ Bu komut, mevcut container'ları durdurur, `user-service` için yeni bir imaj de
 **Beklenen Sonuç:**
 *   **Status:** `500 Internal Server Error`
 *   **Body:** "Invalid credentials" mesajını içeren bir hata yanıtı. 
+
+---
+
+# Ticket-Service API Testleri
+
+Bu bölüm, daha önce **user-service** üzerinden JWT alındıktan sonra **ticket-service** uç noktalarını test etmek için adımları içerir. Aşağıdaki senaryolarda `${TOKEN}` ifadesi, **Test 3** (Başarılı Giriş) adımında elde edilen JWT değerini temsil eder.
+
+> Postman ipucu: Koleksiyon düzeyinde `{{jwt}}` adında bir variable tanımlayıp, login isteğinin **Tests** sekmesinde
+> ```javascript
+> pm.collectionVariables.set("jwt", pm.response.json().token);
+> ```
+> kodunu ekleyerek token’ı otomatik saklayabilirsiniz. Diğer isteklerde *Authorization* sekmesinde **Bearer Token** → `{{jwt}}` yazmanız yeterlidir.
+
+### Test 6: Ticket Oluşturma
+
+**Amaç:** Bir müşteri adına yeni destek talebi (ticket) oluşturmak.
+
+1. Koleksiyona `Create Ticket` adlı yeni bir request ekleyin.
+2. **Method:** `POST`
+3. **URL:** `http://localhost:8081/api/tickets`
+4. **Headers:**
+   * `Authorization: Bearer {{jwt}}`
+5. **Body** → `raw` / `JSON`:
+   ```json
+   {
+     "customerId": 1,
+     "issue": "Mobil uygulama açılmıyor.",
+     "category": "Yazılım Hatası",
+     "priority": "Yüksek"
+   }
+   ```
+6. **Send** butonuna tıklayın.
+
+**Beklenen Sonuç:**
+* **Status:** `201 Created`
+* **Body:** Oluşturulan ticket bilgilerini içeren JSON.
+
+---
+
+### Test 7: Ticket Atama (Assign)
+
+**Amaç:** Destek uzmanının ticket’ı kendisine ataması.
+
+1. `Assign Ticket` adlı yeni request.
+2. **Method:** `PUT`
+3. **URL:** `http://localhost:8081/api/tickets/assign`
+4. **Headers:**
+   * `Authorization: Bearer {{jwt}}`  *(SUPPORT_AGENT veya ADMIN rolü olan kullanıcıya ait token olmalı)*
+5. **Body** (`raw` / `JSON`):
+   ```json
+   {
+     "ticketId": 10,
+     "newAssignedTo": 5,
+     "reason": "Çağrıyı ben üstleniyorum."
+   }
+   ```
+6. **Send**
+
+**Beklenen Sonuç:** `200 OK` ve `assignedTo` alanı güncellenmiş ticket JSON’u.
+
+---
+
+### Test 8: Durum Güncelleme
+
+**Amaç:** Ticket durumunu `İşlemde` olarak güncellemek.
+
+1. `Update Ticket Status` request.
+2. **Method:** `PUT`
+3. **URL:** `http://localhost:8081/api/tickets/status`
+4. **Headers:** `Authorization: Bearer {{jwt}}`
+5. **Body** (`JSON`):
+   ```json
+   {
+     "ticketId": 10,
+     "newStatus": "İşlemde",
+     "reason": "Çalışmalara başlandı."
+   }
+   ```
+6. **Beklenen:** `200 OK`, `status` alanı `İşlemde` döner.
+
+---
+
+### Test 9: Müşteriye Ait Ticketları Listeleme
+
+**Amaç:** Belirli müşterinin tüm ticketlarını çekmek.
+
+1. `List Tickets by Customer` request.
+2. **Method:** `GET`
+3. **URL:** `http://localhost:8081/api/tickets?customerId=1`
+4. **Headers:** `Authorization: Bearer {{jwt}}`
+
+**Beklenen Sonuç:** `200 OK`, JSON dizisi şeklinde ticket listesi. 
