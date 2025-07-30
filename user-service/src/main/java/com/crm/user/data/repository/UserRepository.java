@@ -6,18 +6,17 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 /**
- * Spring Data R2DBC repository for the {@link User} entity.
- * Provides reactive CRUD operations and custom query methods for 'users' table.
+ * Reactive repository for {@link User} entity.
  */
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
     /**
-     * Finds a user by their email address.
-     * Spring Data R2DBC will automatically generate the query based on the method name.
+     * Kullanıcı adını benzersiz olarak arar.
      *
-     * @param email the email address to search for.
-     * @return a {@link Mono} emitting the found user or empty if not found.
+     * @param userName kullanıcı adı
+     * @return Mono<User>
      */
-    Mono<User> findByEmail(String email);
-} 
+    Mono<User> findByUserName(String userName);
+
+}

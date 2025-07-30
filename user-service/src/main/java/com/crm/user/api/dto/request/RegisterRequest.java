@@ -4,9 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
 
 /**
  * Represents the data transfer object for a registration request.
@@ -26,11 +26,25 @@ public class RegisterRequest {
     private String name;
 
     /**
-     * The email address, which will be used for login.
+     * The surname of the person registering.
+     */
+    @NotBlank(message = "Surname cannot be blank")
+    private String surname;
+
+    /**
+     * Email address (unique).
      */
     @NotBlank(message = "Email cannot be blank")
     @Email(message = "Email should be valid")
     private String email;
+
+    /**
+     * Kullanıcı adı (benzersiz).
+     */
+    @NotBlank(message = "User name cannot be blank")
+    private String userName;
+
+
 
     /**
      * The plain-text password. It will be hashed before being stored.
@@ -45,12 +59,9 @@ public class RegisterRequest {
     private String phone;
 
     /**
-     * The department the user belongs to (only for Users).
+     * Kullanıcının bağlı olduğu departman adı.
      */
+    @NotBlank(message = "Department cannot be blank")
     private String department;
 
-    /**
-     * The expertise level of the user (only for Users).
-     */
-    private String expertiseLevel;
 } 

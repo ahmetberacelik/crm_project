@@ -7,6 +7,8 @@ services:
     build:
       context: .
       dockerfile: user-service/Dockerfile
+      args:
+        USER_SERVER_PORT: ${USER_SERVER_PORT}
     # The container name for easier identification.
     container_name: user-service
     # Read environment variables from the .env file in the root directory.
@@ -14,9 +16,9 @@ services:
 #      - SPRING_FLYWAY_REPAIR=true
     env_file:
       - .env
-    # Map the host port to the container port. Uses the variable from .env.
+    # Map the host port to the container port. Uses USER_SERVER_PORT from .env.
     ports:
-      - "${SERVER_PORT}:${SERVER_PORT}"
+      - "${USER_SERVER_PORT}:${USER_SERVER_PORT}"
     # Define the network this service will connect to.
     networks:
       - crm-network
@@ -26,23 +28,6 @@ services:
       mssql-db:
         condition: service_healthy
     # Automatically restart the container unless it was manually stopped.
-    restart: unless-stopped
-
-  # Ticket Service Application
-  ticket-service:
-    build:
-      context: .
-      dockerfile: ticket-service/Dockerfile
-    container_name: ticket-service
-    env_file:
-      - .env
-    ports:
-      - "${TICKET_SERVER_PORT}:8080"
-    networks:
-      - crm-network
-    depends_on:
-      mssql-db:
-        condition: service_healthy
     restart: unless-stopped
 
   # Microsoft SQL Server Database

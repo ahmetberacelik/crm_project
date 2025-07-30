@@ -12,8 +12,6 @@ COPY pom.xml .
 # Copy the user-service module's pom.xml
 COPY user-service/pom.xml ./user-service/
 
-# Copy ticket-service pom to satisfy parent modules list
-COPY ticket-service/pom.xml ./ticket-service/
 
 # Download all dependencies into the local Maven repository.
 # This step is cached by Docker, so it only runs again if the pom files change.
@@ -38,8 +36,9 @@ WORKDIR /app
 COPY --from=builder /app/user-service/target/user-service-*.jar app.jar
 
 # Expose the port that the Spring Boot application will run on.
-# This should match the SERVER_PORT in your .env file.
-EXPOSE 8080
+# Bu port .env dosyasındaki USER_SERVER_PORT değişkeni ile eşleşmelidir.
+ARG USER_SERVER_PORT
+EXPOSE ${USER_SERVER_PORT}
 
 # Define the command to execute when the container starts.
 ENTRYPOINT ["java", "-jar", "app.jar"] 

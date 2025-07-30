@@ -17,10 +17,10 @@ import jakarta.validation.constraints.NotBlank;
 public class LoginRequest {
 
     /**
-     * The email address of the user or customer.
+     * Kullanıcı adı.
      */
-    @NotBlank(message = "Email cannot be blank")
-    private String email;
+    @NotBlank(message = "User name cannot be blank")
+    private String userName;
 
     /**
      * The plain-text password for authentication.

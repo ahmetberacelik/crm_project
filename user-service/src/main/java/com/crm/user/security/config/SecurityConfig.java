@@ -1,6 +1,5 @@
 package com.crm.user.security.config;
 
-import com.crm.user.data.repository.CustomerRepository;
 import com.crm.user.data.repository.UserRepository;
 import com.crm.user.security.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
@@ -32,11 +31,8 @@ import reactor.core.publisher.Mono;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
-    private final CustomerRepository customerRepository;
-
-    public SecurityConfig(UserRepository userRepository, CustomerRepository customerRepository) {
+        public SecurityConfig(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.customerRepository = customerRepository;
     }
 
     @Bean
@@ -46,11 +42,9 @@ public class SecurityConfig {
     
     @Bean
     public ReactiveUserDetailsService reactiveUserDetailsService() {
-        return username -> userRepository.findByEmail(username)
+        return username -> userRepository.findByUserName(username)
                 .map(UserDetails.class::cast)
-                .switchIfEmpty(customerRepository.findByEmail(username)
-                        .map(UserDetails.class::cast))
-                .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found with email: " + username)));
+                .switchIfEmpty(Mono.error(new UsernameNotFoundException("User not found: " + username)));
     }
 
     @Bean

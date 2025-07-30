@@ -35,50 +35,41 @@ public class User implements UserDetails {
     private Long userId;
 
     /**
-     * The full name of the user.
-     * Maps to the 'name' column.
+     * Kullanıcının giriş için kullandığı kullanıcı adı.
+     * 'user_name' sütununa map edilir ve benzersizdir.
      */
-    @Column("name")
-    private String name;
+    @Column("user_name")
+    private String userName;
 
     /**
-     * The user's email address, used for login.
-     * Maps to the 'email' column, which is unique.
-     */
-    @Column("email")
-    private String email;
-
-    /**
-     * The user's hashed password.
-     * Maps to the 'password_hash' column.
+     * BCrypt ile hashlenmiş şifre.
      */
     @Column("password_hash")
     private String passwordHash;
 
     /**
-     * The role of the user within the system (e.g., 'ADMIN', 'SUPPORT_AGENT').
-     * Maps to the 'role' column.
+     * Person (çalışan profili) tablosuna bağlanan yabancı anahtar.
      */
-    @Column("role")
-    private String role;
+    @Column("person_id")
+    private Long personId;
 
     /**
-     * The department the user belongs to (e.g., 'IT', 'Finance').
-     * Maps to the 'department' column.
+     * Kullanıcının tek aktif refresh-token hash değeri.
      */
-    @Column("department")
-    private String department;
+    @Column("refresh_token_hash")
+    private String refreshTokenHash;
 
     /**
-     * The expertise level of the user (e.g., 'Senior', 'Junior').
-     * Maps to the 'expertise_level' column.
+     * Refresh-token süresinin sona ereceği zaman.
      */
-    @Column("expertise_level")
-    private String expertiseLevel;
+    @Column("refresh_token_expires_at")
+    private java.time.LocalDateTime refreshTokenExpiresAt;
+
+    private static final String ROLE_USER = "ROLE_USER";
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        return List.of(new SimpleGrantedAuthority(ROLE_USER));
     }
 
     @Override
@@ -88,7 +79,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return userName;
     }
 
     @Override
