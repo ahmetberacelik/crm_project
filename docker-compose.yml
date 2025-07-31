@@ -27,6 +27,12 @@ services:
     depends_on:
       mssql-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${USER_SERVER_PORT}/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     # Automatically restart the container unless it was manually stopped.
     restart: unless-stopped
 
@@ -48,8 +54,7 @@ services:
       mssql-db:
         condition: service_healthy
       user-service:
-        condition: service_started
-    command: sh -c "sleep 30 && exec java -jar /app/department-service.jar"
+        condition: service_healthy
     restart: unless-stopped
 
   # Microsoft SQL Server Database
