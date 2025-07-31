@@ -143,7 +143,7 @@ Geçişler, ticket-service içindeki `StateMachine` bileşeni tarafından method
 
 ## 9. Veritabanı Göçleri
 Flyway her servis için entegre (`db/migration`).  
-Sürüm dosyaları: `V1__initial_schema.sql` …
+Sürüm dosyaları: `V3__initial_schema.sql` …
 
 ## 10. Docker ve Lokal Geliştirme
 ```

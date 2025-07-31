@@ -12,8 +12,8 @@ services:
     # The container name for easier identification.
     container_name: user-service
     # Read environment variables from the .env file in the root directory.
-#    environment:
-#      - SPRING_FLYWAY_REPAIR=true
+    #    environment:
+    #      - SPRING_FLYWAY_REPAIR=true
     env_file:
       - .env
     # Map the host port to the container port. Uses USER_SERVER_PORT from .env.
@@ -28,6 +28,28 @@ services:
       mssql-db:
         condition: service_healthy
     # Automatically restart the container unless it was manually stopped.
+    restart: unless-stopped
+
+  # Department Service
+  department-service:
+    build:
+      context: .
+      dockerfile: department-service/Dockerfile
+      args:
+        DEPARTMENT_SERVER_PORT: ${DEPARTMENT_SERVER_PORT}
+    container_name: department-service
+    env_file:
+      - .env
+    ports:
+      - "${DEPARTMENT_SERVER_PORT}:${DEPARTMENT_SERVER_PORT}"
+    networks:
+      - crm-network
+    depends_on:
+      mssql-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    command: sh -c "sleep 30 && exec java -jar /app/department-service.jar"
     restart: unless-stopped
 
   # Microsoft SQL Server Database
@@ -72,4 +94,4 @@ networks:
 # Define the named volume for data persistence.
 volumes:
   mssql-data:
-    driver: local 
+    driver: local

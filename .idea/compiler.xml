@@ -23,6 +23,7 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="department-service" options="-parameters" />
       <module name="ticket-service" options="-parameters" />
       <module name="user-service" options="-parameters" />
     </option>

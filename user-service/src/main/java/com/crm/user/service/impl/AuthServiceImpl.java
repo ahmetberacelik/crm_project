@@ -12,7 +12,10 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final WebClient departmentWebClient;
 
     @Override
     public Mono<AuthResponse> login(LoginRequest request) {
@@ -38,12 +42,21 @@ public class AuthServiceImpl implements AuthService {
                     if (exists) {
                         return Mono.error(new RuntimeException("Kullanıcı adı zaten mevcut: " + request.getUserName()));
                     }
-                    User user = User.builder()
-                            .userName(request.getUserName())
-                            .passwordHash(passwordEncoder.encode(request.getPassword()))
-                            .build();
-                    return userRepository.save(user)
-                           .map(saved -> AuthResponse.builder().token(jwtUtil.generateToken(saved)).build());
+                    return departmentWebClient.post()
+                            .uri("/api/persons")
+                            .bodyValue(request)
+                            .retrieve()
+                            .bodyToMono(Map.class)
+                            .map(resp -> ((Number) resp.get("personId")).longValue())
+                            .flatMap(personId -> {
+                                User user = User.builder()
+                                        .userName(request.getUserName())
+                                        .passwordHash(passwordEncoder.encode(request.getPassword()))
+                                        .personId(personId)
+                                        .build();
+                                return userRepository.save(user)
+                                        .map(saved -> AuthResponse.builder().token(jwtUtil.generateToken(saved)).build());
+                            });
                 });
     }
 }

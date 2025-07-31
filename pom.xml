@@ -26,8 +26,8 @@
 
     <modules>
         <module>user-service</module>
-        <!--<module>department-service</module>
-        <module>ticket-service</module>
+        <module>department-service</module>
+        <!--<module>ticket-service</module>
         <module>gateway-service</module>-->
     </modules>
 

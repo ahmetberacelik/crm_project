@@ -6,7 +6,7 @@
         <groupId>com.crm</groupId>
         <artifactId>crm-parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath>../</relativePath> <!-- relative path to the parent pom -->
+        <relativePath>../pom.xml</relativePath> <!-- relative path to the parent pom -->
     </parent>
 
     <artifactId>user-service</artifactId>

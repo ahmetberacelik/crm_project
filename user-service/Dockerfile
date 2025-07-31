@@ -11,6 +11,8 @@ COPY pom.xml .
 
 # Copy the user-service module's pom.xml
 COPY user-service/pom.xml ./user-service/
+# copy department-service pom to satisfy parent build
+COPY department-service/pom.xml ./department-service/
 
 
 # Download all dependencies into the local Maven repository.
