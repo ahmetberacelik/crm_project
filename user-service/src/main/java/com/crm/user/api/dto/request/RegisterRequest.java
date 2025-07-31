@@ -59,12 +59,6 @@ public class RegisterRequest {
      */
     private String phone;
 
-    /**
-     * Kullanıcının bağlı olduğu departman adı.
-     */
-    @NotBlank(message = "Department cannot be blank")
-    private String department;
-
     @NotNull(message = "departmentId cannot be null")
     private Long departmentId;
 
