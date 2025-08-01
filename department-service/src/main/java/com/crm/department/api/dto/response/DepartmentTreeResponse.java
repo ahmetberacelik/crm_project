@@ -15,5 +15,6 @@ import java.util.List;
 public class DepartmentTreeResponse {
     private Long departmentId;
     private String name;
+    @Builder.Default
     private List<DepartmentTreeResponse> children = new ArrayList<>();
 }

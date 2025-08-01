@@ -1,31 +1,34 @@
-# User-Service API – Postman Test Rehberi
+# API Test Rehberi – Postman
 
-Bu belge, **user-service** API uç noktalarını Postman ile test etmek için adım adım yönergeler içerir.
-
-> Tüm istek URL’lerinde `localhost:${USER_SERVER_PORT}` kullanın. `.env` dosyasında varsayılan `USER_SERVER_PORT` değeri `8081` dir.
+Bu belge, projedeki servislerin API uç noktalarını Postman ile test etmek için adım adım yönergeler içerir.
 
 ---
 
-## 1. Postman Ortamı Oluşturun
-1. Postman’de **Environments** → **Add** tıklayın.  
-2. Aşağıdaki anahtar–değer çiftlerini ekleyin:
-   | Key | Initial / Current Value |
-   |-----|------------------------|
-   | `base_url` | `http://localhost:{{USER_SERVER_PORT}}` |
-   | `token`    | *(boş bırakın – login sonrası set edilecek)* |
-   | `USER_SERVER_PORT` | `8081` *(veya .env’deki değer)* |
-3. **Save** edin ve ortamı seçin.
+## 1. Postman Ortamı (Environment) Kurulumu
+Postman’de **Environments** → **Add** tıklayarak yeni bir ortam oluşturun ve aşağıdaki değişkenleri ekleyin. Bu, servis portlarını tek bir yerden yönetmenizi sağlar.
+
+| Key                    | Initial / Current Value            | Açıklama |
+|------------------------|------------------------------------|----------|
+| `USER_SERVER_PORT`     | `8081`                             | `user-service` portu |
+| `DEPARTMENT_SERVER_PORT` | `8082`                             | `department-service` portu |
+| `user_base_url`        | `http://localhost:{{USER_SERVER_PORT}}` | `user-service` temel adresi |
+| `department_base_url`  | `http://localhost:{{DEPARTMENT_SERVER_PORT}}` | `department-service` temel adresi |
+| `token`                | *(boş bırakın)*                     | Login sonrası otomatik dolacak |
+
+Ortamı kaydedin ve aktif hale getirin.
 
 ---
 
-## 2. Register – Kullanıcı Kaydı
+## 2. User-Service API
+
+### 2.1. Register – Kullanıcı Kaydı
 | Özellik | Değer |
 |---------|-------|
 | Method  | `POST` |
-| URL     | `{{base_url}}/api/auth/register` |
+| URL     | `{{user_base_url}}/api/auth/register` |
 | Headers | `Content-Type: application/json` |
 
-### Gövde (raw → JSON)
+**Gövde (Body → raw → JSON):**
 ```json
 {
   "name": "Ahmet",
@@ -34,82 +37,97 @@ Bu belge, **user-service** API uç noktalarını Postman ile test etmek için ad
   "userName": "ahmet",
   "password": "Secret123!",
   "phone": "+90 555 000 0000",
-  "department": "IT"
+  "departmentId": 1
 }
 ```
+> **Not:** `departmentId` olarak gönderilen ID, `departments` tablosunda gerçekten var olmalıdır.
 
-### Başarılı Yanıt
+**Başarılı Yanıt (200 OK):**
 ```json
 {
   "token": "<JWT>"
 }
 ```
 
-> **Test Script** (Tests sekmesine yapıştırın) – token’ı ortama kaydeder:
+**Test Script (Tests sekmesine yapıştırın):**
+Bu script, dönen token'ı otomatik olarak ortam değişkenine kaydeder.
 ```js
 const json = pm.response.json();
-pm.environment.set("token", json.token);
+if (json && json.token) {
+    pm.environment.set("token", json.token);
+    console.log("Token saved to environment.");
+}
 ```
 
----
-
-## 3. Login – Kullanıcı Girişi
+### 2.2. Login – Kullanıcı Girişi
 | Özellik | Değer |
+|---------|-------|
 | Method  | `POST` |
-| URL     | `{{base_url}}/api/auth/login` |
+| URL     | `{{user_base_url}}/api/auth/login` |
 | Headers | `Content-Type: application/json` |
 
-### Gövde
+**Gövde:**
 ```json
 {
   "userName": "ahmet",
   "password": "Secret123!"
 }
 ```
+> Test script'i olarak Register bölümündeki script'in aynısını kullanabilirsiniz.
 
-### Test Script
-```js
-const json = pm.response.json();
-pm.environment.set("token", json.token);
+---
+
+## 3. Department-Service API
+> **Önemli:** Bu servise atılacak tüm istekler, **Authorization** sekmesinde `Type` olarak `Bearer Token` ve `Token` olarak `{{token}}` seçilerek yapılmalıdır.
+
+### 3.1. Departman Ağacını Listeleme
+| Özellik | Değer |
+|---------|-------|
+| Method  | `GET` |
+| URL     | `{{department_base_url}}/api/departments/tree` |
+| Yetki   | `ROLE_USER` veya `ROLE_ADMIN` |
+
+### 3.2. Yeni Departman Oluşturma (Admin Gerekli)
+| Özellik | Değer |
+|---------|-------|
+| Method  | `POST` |
+| URL     | `{{department_base_url}}/api/departments` |
+| Yetki   | `ROLE_ADMIN` |
+
+**Gövde:**
+```json
+{
+  "name": "AR-GE",
+  "parentDepartmentId": 1
+}
 ```
 
----
+### 3.3. Departman Güncelleme (Admin Gerekli)
+| Özellik | Değer |
+|---------|-------|
+| Method  | `PUT` |
+| URL     | `{{department_base_url}}/api/departments/{id}` *(Örn: `/api/departments/27`)* |
+| Yetki   | `ROLE_ADMIN` |
 
-## 4. Yetkili İstekler
-Login/Register sonrası alınan JWT’yi `token` ortam değişkenine kaydettiğimiz için, diğer isteklerde sadece şu Header’ı ekleyin:
-
+**Gövde:**
+```json
+{
+  "name": "Araştırma ve Geliştirme",
+  "parentDepartmentId": 1
+}
 ```
-Authorization: Bearer {{token}}
-```
 
-> Postman’de **Headers** → `Authorization` anahtarı, **VALUE** kısmına `Bearer {{token}}` yazın.
-
----
-
-## 5. Örnek Korunan İstek (sağlık kontrolü gibi)
-`GET {{base_url}}/api/secure/ping`  *(varsayımsal endpoint)*
-
-Headers: `Authorization: Bearer {{token}}`
+### 3.4. Departman Silme (Admin Gerekli)
+| Özellik | Değer |
+|---------|-------|
+| Method  | `DELETE` |
+| URL     | `{{department_base_url}}/api/departments/{id}` |
+| Yetki   | `ROLE_ADMIN` |
 
 ---
 
-## 6. Docker Compose ile Çalıştırma
-```bash
-# Proje kök dizininde
-docker-compose up --build
-```
-Hizmetler başladıktan sonra Postman istekleri gönderebilirsiniz.
-
----
-
-## 7. Hata Giderme
-1. **401 Unauthorized**  
-   – JWT eksik / süresi dolmuş. Login tekrar yapın.
-2. **409 Conflict** (register)  
-   – `userName` zaten mevcut.
-3. **Could not connect**  
-   – user-service konteyneri çalışmıyor veya farklı port.
-
----
-
-> Gereksinimler arttığında (refresh token, ticket-service vb.) bu belgeyi güncelleyiniz.
+## 4. Hata Giderme
+1.  **401 Unauthorized:** JWT eksik, geçersiz veya süresi dolmuş. Tekrar **Login** yapın.
+2.  **403 Forbidden:** Bu işlemi yapmaya yetkiniz yok. İsteğin `ROLE_ADMIN` yetkisi gerektirip gerektirmediğini kontrol edin ve admin kullanıcısıyla login yaptığınızdan emin olun.
+3.  **500 Internal Server Error (Register sırasında):** `department-service` çalışmıyor olabilir veya gönderdiğiniz `departmentId` geçersiz olabilir. Servis loglarını kontrol edin.
+4.  **"Connection refused":** İlgili servisin konteyneri çalışmıyor veya `.env` dosyasındaki port ayarları yanlış.

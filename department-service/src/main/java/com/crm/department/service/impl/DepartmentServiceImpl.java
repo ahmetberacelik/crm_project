@@ -1,5 +1,7 @@
 package com.crm.department.service.impl;
 
+import com.crm.department.api.dto.request.DepartmentCreateRequest;
+import com.crm.department.api.dto.request.DepartmentUpdateRequest;
 import com.crm.department.api.dto.response.DepartmentTreeResponse;
 import com.crm.department.data.entity.Department;
 import com.crm.department.data.repository.DepartmentRepository;
@@ -7,6 +9,7 @@ import com.crm.department.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,9 +24,54 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public Flux<DepartmentTreeResponse> getDepartmentTree() {
-        return departmentRepository.findAll()
+        return departmentRepository.findAllByIsDeletedFalse()
                 .collectList()
                 .flatMapMany(list -> Flux.fromIterable(buildTree(list)));
+    }
+
+    @Override
+    public Mono<DepartmentTreeResponse> createDepartment(DepartmentCreateRequest request) {
+        Department department = Department.builder()
+                .name(request.getName())
+                .parentDepartmentId(request.getParentDepartmentId())
+                .isActive(true)
+                .isDeleted(false)
+                .isUpdated(false)
+                .build();
+        return departmentRepository.save(department)
+                .map(saved -> DepartmentTreeResponse.builder()
+                        .departmentId(saved.getDepartmentId())
+                        .name(saved.getName())
+                        .build());
+    }
+
+    @Override
+    public Mono<DepartmentTreeResponse> updateDepartment(Long id, DepartmentUpdateRequest request) {
+        return departmentRepository.findByDepartmentIdAndIsDeletedFalse(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Department not found with id: " + id)))
+                .flatMap(department -> {
+                    department.setName(request.getName());
+                    department.setParentDepartmentId(request.getParentDepartmentId());
+                    department.setIsUpdated(true);
+                    // In a real app, you would also set the updated_user_id here
+                    return departmentRepository.save(department);
+                })
+                .map(saved -> DepartmentTreeResponse.builder()
+                        .departmentId(saved.getDepartmentId())
+                        .name(saved.getName())
+                        .build());
+    }
+
+    @Override
+    public Mono<Void> deleteDepartment(Long id) {
+        return departmentRepository.findByDepartmentIdAndIsDeletedFalse(id)
+                .switchIfEmpty(Mono.error(new RuntimeException("Department not found with id: " + id)))
+                .flatMap(department -> {
+                    department.setIsDeleted(true);
+                    // In a real app, you would also set the deleted_user_id here
+                    return departmentRepository.save(department);
+                })
+                .then();
     }
 
     private List<DepartmentTreeResponse> buildTree(List<Department> deps) {

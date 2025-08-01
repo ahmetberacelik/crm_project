@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
                             "phone", request.getPhone(),
                             "departmentId", request.getDepartmentId());
                     return departmentWebClient.post()
-                            .uri("/api/persons")
+                            .uri("/api/internal/persons")
                             .bodyValue(personPayload)
                             .retrieve()
                             .bodyToMono(Map.class)
@@ -59,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
                                         .userName(request.getUserName())
                                         .passwordHash(passwordEncoder.encode(request.getPassword()))
                                         .personId(personId)
+                                        .role("ROLE_USER") // Assign default role
                                         .build();
                                 return userRepository.save(user)
                                         .map(saved -> AuthResponse.builder().token(jwtUtil.generateToken(saved)).build());

@@ -53,6 +53,9 @@ public class User implements UserDetails {
     @Column("person_id")
     private Long personId;
 
+    @Column("role")
+    private String role;
+
     /**
      * Kullanıcının tek aktif refresh-token hash değeri.
      */
@@ -65,11 +68,9 @@ public class User implements UserDetails {
     @Column("refresh_token_expires_at")
     private java.time.LocalDateTime refreshTokenExpiresAt;
 
-    private static final String ROLE_USER = "ROLE_USER";
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(ROLE_USER));
+        return List.of(new SimpleGrantedAuthority(role));
     }
 
     @Override

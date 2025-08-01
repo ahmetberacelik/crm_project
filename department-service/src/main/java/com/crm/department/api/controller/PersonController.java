@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/persons")
+@RequestMapping("/api/internal/persons")
 @RequiredArgsConstructor
 public class PersonController {
 
