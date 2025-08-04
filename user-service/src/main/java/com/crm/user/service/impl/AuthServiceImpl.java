@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
                             "phone", request.getPhone(),
                             "departmentId", request.getDepartmentId());
                     return departmentWebClient.post()
-                            .uri("/api/internal/persons")
+                            .uri("/api/persons/internal/register")
                             .bodyValue(personPayload)
                             .retrieve()
                             .bodyToMono(Map.class)

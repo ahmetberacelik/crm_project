@@ -5,7 +5,7 @@ Bu belge, projedeki servislerin API uç noktalarını Postman ile test etmek iç
 ---
 
 ## 1. Postman Ortamı (Environment) Kurulumu
-Postman’de **Environments** → **Add** tıklayarak yeni bir ortam oluşturun ve aşağıdaki değişkenleri ekleyin. Bu, servis portlarını tek bir yerden yönetmenizi sağlar.
+Postman’de **Environments** → **Add** tıklayarak yeni bir ortam oluşturun ve aşağıdaki değişkenleri ekleyin.
 
 | Key                    | Initial / Current Value            | Açıklama |
 |------------------------|------------------------------------|----------|
@@ -15,41 +15,40 @@ Postman’de **Environments** → **Add** tıklayarak yeni bir ortam oluşturun 
 | `department_base_url`  | `http://localhost:{{DEPARTMENT_SERVER_PORT}}` | `department-service` temel adresi |
 | `token`                | *(boş bırakın)*                     | Login sonrası otomatik dolacak |
 
-Ortamı kaydedin ve aktif hale getirin.
-
 ---
 
 ## 2. User-Service API
 
 ### 2.1. Register – Kullanıcı Kaydı
-| Özellik | Değer |
-|---------|-------|
-| Method  | `POST` |
-| URL     | `{{user_base_url}}/api/auth/register` |
-| Headers | `Content-Type: application/json` |
+- **Method:** `POST`
+- **URL:** `{{user_base_url}}/api/auth/register`
 
 **Gövde (Body → raw → JSON):**
 ```json
 {
-  "name": "Ahmet",
-  "surname": "Yılmaz",
-  "email": "ahmet@example.com",
-  "userName": "ahmet",
+  "name": "Ayşe",
+  "surname": "Kara",
+  "email": "ayse@example.com",
+  "userName": "ayse",
   "password": "Secret123!",
-  "phone": "+90 555 000 0000",
-  "departmentId": 1
+  "phone": "+90 555 111 2233",
+  "departmentId": 2
 }
 ```
-> **Not:** `departmentId` olarak gönderilen ID, `departments` tablosunda gerçekten var olmalıdır.
 
-**Başarılı Yanıt (200 OK):**
+### 2.2. Login – Kullanıcı Girişi
+- **Method:** `POST`
+- **URL:** `{{user_base_url}}/api/auth/login`
+
+**Gövde:**
 ```json
 {
-  "token": "<JWT>"
+  "userName": "ayse",
+  "password": "Secret123!"
 }
 ```
 
-**Test Script (Tests sekmesine yapıştırın):**
+**Test Script (Register ve Login için):**
 Bu script, dönen token'ı otomatik olarak ortam değişkenine kaydeder.
 ```js
 const json = pm.response.json();
@@ -59,75 +58,40 @@ if (json && json.token) {
 }
 ```
 
-### 2.2. Login – Kullanıcı Girişi
-| Özellik | Değer |
-|---------|-------|
-| Method  | `POST` |
-| URL     | `{{user_base_url}}/api/auth/login` |
-| Headers | `Content-Type: application/json` |
-
-**Gövde:**
-```json
-{
-  "userName": "ahmet",
-  "password": "Secret123!"
-}
-```
-> Test script'i olarak Register bölümündeki script'in aynısını kullanabilirsiniz.
-
 ---
 
 ## 3. Department-Service API
-> **Önemli:** Bu servise atılacak tüm istekler, **Authorization** sekmesinde `Type` olarak `Bearer Token` ve `Token` olarak `{{token}}` seçilerek yapılmalıdır.
+> **Önemli:** Bu servise atılacak tüm istekler için **Authorization** sekmesinde `Type` olarak `Bearer Token` ve `Token` olarak `{{token}}` seçilmelidir.
 
-### 3.1. Departman Ağacını Listeleme
-| Özellik | Değer |
-|---------|-------|
-| Method  | `GET` |
-| URL     | `{{department_base_url}}/api/departments/tree` |
-| Yetki   | `ROLE_USER` veya `ROLE_ADMIN` |
+### 3.1. Departman Yönetimi
 
-### 3.2. Yeni Departman Oluşturma (Admin Gerekli)
-| Özellik | Değer |
-|---------|-------|
-| Method  | `POST` |
-| URL     | `{{department_base_url}}/api/departments` |
-| Yetki   | `ROLE_ADMIN` |
+- **`GET /api/departments/tree`**: Aktif departman ağacını listeler. (Yetki: `ROLE_USER` / `ROLE_ADMIN`)
+- **`POST /api/departments`**: Yeni departman oluşturur. (Yetki: `ROLE_ADMIN`)
+  - **Gövde:** `{ "name": "AR-GE", "parentDepartmentId": 1 }`
+- **`PUT /api/departments/{id}`**: Departman günceller. (Yetki: `ROLE_ADMIN`)
+  - **Gövde:** `{ "name": "Araştırma ve Geliştirme", "parentDepartmentId": 1 }`
+- **`DELETE /api/departments/{id}`**: Departmanı pasif hale getirir. (Yetki: `ROLE_ADMIN`)
 
-**Gövde:**
-```json
-{
-  "name": "AR-GE",
-  "parentDepartmentId": 1
-}
-```
+### 3.2. Personel (Çalışan) Yönetimi
 
-### 3.3. Departman Güncelleme (Admin Gerekli)
-| Özellik | Değer |
-|---------|-------|
-| Method  | `PUT` |
-| URL     | `{{department_base_url}}/api/departments/{id}` *(Örn: `/api/departments/27`)* |
-| Yetki   | `ROLE_ADMIN` |
+- **`GET /api/persons`**: Aktif personelleri listeler. (Yetki: `ROLE_USER` / `ROLE_ADMIN`)
+- **`GET /api/persons/{id}`**: ID'si verilen aktif personeli getirir. (Yetki: `ROLE_USER` / `ROLE_ADMIN`)
+- **`POST /api/persons`**: Yeni personel oluşturur. (Yetki: `ROLE_ADMIN`)
+  - **Gövde:** `{ "name": "Mehmet", "surname": "Can", "email": "mehmet@example.com", "phone": "+90 544 888 7766", "departmentId": 3 }`
+- **`PUT /api/persons/{id}`**: Personel bilgilerini günceller. (Yetki: `ROLE_USER` / `ROLE_ADMIN`)
+  - **Gövde:** `{ "name": "Mehmet", "surname": "Canlı", "email": "mehmet.canli@example.com", "phone": "+90 544 888 7766", "departmentId": 4 }`
+- **`DELETE /api/persons/{id}`**: Personeli pasif hale getirir. (Yetki: `ROLE_USER` / `ROLE_ADMIN`)
 
-**Gövde:**
-```json
-{
-  "name": "Araştırma ve Geliştirme",
-  "parentDepartmentId": 1
-}
-```
+### 3.3. Personel Yönetimi (Admin'e Özel)
 
-### 3.4. Departman Silme (Admin Gerekli)
-| Özellik | Değer |
-|---------|-------|
-| Method  | `DELETE` |
-| URL     | `{{department_base_url}}/api/departments/{id}` |
-| Yetki   | `ROLE_ADMIN` |
+- **`GET /api/persons/all`**: Aktif ve pasif TÜM personelleri listeler. (Yetki: `ROLE_ADMIN`)
+- **`GET /api/persons/inactive`**: Sadece pasif (silinmiş) personelleri listeler. (Yetki: `ROLE_ADMIN`)
+- **`PUT /api/persons/{id}/reactivate`**: Pasif bir personeli tekrar aktif hale getirir. (Yetki: `ROLE_ADMIN`)
 
 ---
 
 ## 4. Hata Giderme
-1.  **401 Unauthorized:** JWT eksik, geçersiz veya süresi dolmuş. Tekrar **Login** yapın.
-2.  **403 Forbidden:** Bu işlemi yapmaya yetkiniz yok. İsteğin `ROLE_ADMIN` yetkisi gerektirip gerektirmediğini kontrol edin ve admin kullanıcısıyla login yaptığınızdan emin olun.
-3.  **500 Internal Server Error (Register sırasında):** `department-service` çalışmıyor olabilir veya gönderdiğiniz `departmentId` geçersiz olabilir. Servis loglarını kontrol edin.
-4.  **"Connection refused":** İlgili servisin konteyneri çalışmıyor veya `.env` dosyasındaki port ayarları yanlış.
+- **401 Unauthorized:** JWT eksik, geçersiz veya süresi dolmuş. Tekrar **Login** yapın.
+- **403 Forbidden:** Bu işlemi yapmaya yetkiniz yok. İsteğin `ROLE_ADMIN` yetkisi gerektirip gerektirmediğini kontrol edin ve admin kullanıcısıyla login yaptığınızdan emin olun.
+- **500 Internal Server Error (Register sırasında):** `department-service` çalışmıyor veya gönderdiğiniz `departmentId` geçersiz/pasif olabilir. Servis loglarını kontrol edin.
+- **"Connection refused":** İlgili servisin konteyneri çalışmıyor veya `.env` dosyasındaki port ayarları yanlış.

@@ -40,6 +40,11 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.DELETE, "/api/departments/**").hasAuthority("ROLE_ADMIN")
                         
                         // Persons API
+                        .pathMatchers("/api/persons/internal/**").permitAll() // Allow registration flow
+                        .pathMatchers(HttpMethod.GET, "/api/persons/all").hasAuthority("ROLE_ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/persons/inactive").hasAuthority("ROLE_ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/persons/{id}/reactivate").hasAuthority("ROLE_ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/persons").hasAuthority("ROLE_ADMIN") // Only admins can create new persons directly
                         .pathMatchers("/api/persons/**").authenticated()
 
                         // Deny any other unauthenticated access
