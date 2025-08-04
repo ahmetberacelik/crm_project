@@ -13,7 +13,7 @@ COPY pom.xml .
 COPY user-service/pom.xml ./user-service/
 # copy department-service pom to satisfy parent build
 COPY department-service/pom.xml ./department-service/
-
+COPY ticket-service/pom.xml ./ticket-service/
 
 # Download all dependencies into the local Maven repository.
 # This step is cached by Docker, so it only runs again if the pom files change.

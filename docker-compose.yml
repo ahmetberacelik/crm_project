@@ -57,6 +57,27 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Ticket Service
+  ticket-service:
+    build:
+      context: .
+      dockerfile: ticket-service/Dockerfile
+      args:
+        TICKET_SERVER_PORT: ${TICKET_SERVER_PORT}
+    container_name: ticket-service
+    env_file:
+      - .env
+    ports:
+      - "${TICKET_SERVER_PORT}:${TICKET_SERVER_PORT}"
+    networks:
+      - crm-network
+    depends_on:
+      mssql-db:
+        condition: service_healthy
+      department-service:
+        condition: service_started
+    restart: unless-stopped
+
   # Microsoft SQL Server Database
   mssql-db:
     # Use the official Microsoft SQL Server 2019 image for Linux.

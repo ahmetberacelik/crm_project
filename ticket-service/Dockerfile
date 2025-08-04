@@ -37,5 +37,6 @@ COPY --from=builder /app/ticket-service/target/ticket-service-*.jar app.jar
 # Expose the port the application will run on
 EXPOSE ${TICKET_SERVER_PORT}
 
-# Define the command to run the application
-ENTRYPOINT ["java","-
+# Define the command to run the application.
+# This must be a complete and valid JSON array.
+ENTRYPOINT ["java", "-jar", "app.jar"]

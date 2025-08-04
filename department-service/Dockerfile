@@ -5,6 +5,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY department-service/pom.xml ./department-service/
 COPY user-service/pom.xml ./user-service/
+COPY ticket-service/pom.xml ./ticket-service/
 # download deps
 RUN mvn -f department-service/pom.xml dependency:go-offline
 # copy source
