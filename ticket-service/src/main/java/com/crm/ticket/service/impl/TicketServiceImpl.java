@@ -6,8 +6,10 @@ import com.crm.ticket.api.dto.response.TicketResponse;
 import com.crm.ticket.data.entity.Customer;
 import com.crm.ticket.data.entity.Ticket;
 import com.crm.ticket.data.entity.TicketAssignment;
+import com.crm.ticket.data.entity.TicketCategory;
 import com.crm.ticket.data.repository.CustomerRepository;
 import com.crm.ticket.data.repository.TicketAssignmentRepository;
+import com.crm.ticket.data.repository.TicketCategoryRepository;
 import com.crm.ticket.data.repository.TicketRepository;
 import com.crm.ticket.infrastructure.client.DepartmentClient;
 import com.crm.ticket.service.TicketService;
@@ -28,8 +30,10 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final CustomerRepository customerRepository;
     private final TicketAssignmentRepository ticketAssignmentRepository;
-    // ADDED: The client to communicate with department-service
     private final DepartmentClient departmentClient;
+    private final TicketCategoryRepository ticketCategoryRepository;
+
+    private static final Long DEFAULT_DEPARTMENT_ID = 14L; // Bilgi Teknolojileri Destek
 
     @Override
     @Transactional
@@ -45,57 +49,58 @@ public class TicketServiceImpl implements TicketService {
                                 .build()
                 ));
 
-        // 2. Müşteri bilgisiyle ticket'ı oluştur
-        return customerMono.flatMap(customer -> {
-            Ticket newTicket = Ticket.builder()
-                    .issue(request.getIssue())
-                    .priority(request.getPriority())
-                    .isActive(true)
-                    .createdDate(LocalDateTime.now())
-                    .isEmployee(false)
-                    .creatorId(customer.getId())
-                    .build();
-            return ticketRepository.save(newTicket);
-        }).flatMap(savedTicket -> {
-            // 3. Kural motoruna göre ilk atamayı yap (Şimdilik manuel)
-            Long initialDepartmentId = determineDepartmentByCategory(request.getCategory());
-            TicketAssignment assignment = TicketAssignment.builder()
-                    .ticketId(savedTicket.getId())
-                    .isInPool(true)
-                    .departmentId(initialDepartmentId)
-                    .assignedDate(LocalDateTime.now())
-                    .status("OPEN")
-                    .build();
-            return ticketAssignmentRepository.save(assignment)
-                    .thenReturn(savedTicket); // Atama kaydedildikten sonra ticket'ı geri döndür
-        }).flatMap(this::buildTicketResponse); // 4. Cevap DTO'sunu oluştur
+        // Kategoriye göre departman ID'sini asenkron olarak al
+        Mono<Long> departmentIdMono = determineDepartmentIdByCategory(request.getCategory());
+
+        return Mono.zip(customerMono, departmentIdMono)
+                .flatMap(tuple -> {
+                    Customer customer = tuple.getT1();
+                    Long departmentId = tuple.getT2();
+
+                    Ticket newTicket = Ticket.builder()
+                            .issue(request.getIssue())
+                            .priority(request.getPriority())
+                            .isActive(true)
+                            .createdDate(LocalDateTime.now())
+                            .isEmployee(false)
+                            .creatorId(customer.getId())
+                            .build();
+
+                    return ticketRepository.save(newTicket)
+                            .flatMap(savedTicket -> createInitialAssignment(savedTicket, departmentId));
+                })
+                .flatMap(this::buildTicketResponse);
     }
 
     @Override
     @Transactional
     public Mono<TicketResponse> createTicketFromEmployee(CreateTicketEmployeeRequest request, Long creatorId) {
-        Ticket newTicket = Ticket.builder()
-                .issue(request.getIssue())
-                .priority(request.getPriority())
-                .isActive(true)
-                .createdDate(LocalDateTime.now())
-                .isEmployee(true)
-                .creatorId(creatorId)
-                .build();
+        Mono<Long> departmentIdMono = determineDepartmentIdByCategory(request.getCategory());
 
-        return ticketRepository.save(newTicket)
-                .flatMap(savedTicket -> {
-                    Long initialDepartmentId = determineDepartmentByCategory(request.getCategory());
-                    TicketAssignment assignment = TicketAssignment.builder()
-                            .ticketId(savedTicket.getId())
-                            .isInPool(true)
-                            .departmentId(initialDepartmentId)
-                            .assignedDate(LocalDateTime.now())
-                            .status("OPEN")
-                            .build();
-                    return ticketAssignmentRepository.save(assignment)
-                            .thenReturn(savedTicket);
-                }).flatMap(this::buildTicketResponse);
+        return departmentIdMono.flatMap(departmentId -> {
+            Ticket newTicket = Ticket.builder()
+                    .issue(request.getIssue())
+                    .priority(request.getPriority())
+                    .isActive(true)
+                    .createdDate(LocalDateTime.now())
+                    .isEmployee(true)
+                    .creatorId(creatorId)
+                    .build();
+
+            return ticketRepository.save(newTicket)
+                    .flatMap(savedTicket -> createInitialAssignment(savedTicket, departmentId));
+        }).flatMap(this::buildTicketResponse);
+    }
+
+    private Mono<Ticket> createInitialAssignment(Ticket ticket, Long departmentId) {
+        TicketAssignment assignment = TicketAssignment.builder()
+                .ticketId(ticket.getId())
+                .isInPool(true)
+                .departmentId(departmentId)
+                .assignedDate(LocalDateTime.now())
+                .status("OPEN")
+                .build();
+        return ticketAssignmentRepository.save(assignment).thenReturn(ticket);
     }
 
     @Override
@@ -213,11 +218,16 @@ public class TicketServiceImpl implements TicketService {
         return TicketResponse.AssigneeInfo.builder().id(id).name("Unknown " + type).type(type).build();
     }
 
-    // This simple rule engine will be developed later
-    private Long determineDepartmentByCategory(String category) {
-        if ("BILLING".equalsIgnoreCase(category)) {
-            return 2L;
-        }
-        return 1L; // Default to IT
+    /**
+     * Determines the target department ID by looking up the category key in the database.
+     * This replaces the static switch-case block.
+     *
+     * @param categoryKey The category key from the API request.
+     * @return A Mono emitting the target department ID, or a default ID if not found.
+     */
+    private Mono<Long> determineDepartmentIdByCategory(String categoryKey) {
+        return ticketCategoryRepository.findByCategoryKeyAndIsActive(categoryKey, true)
+                .map(TicketCategory::getTargetDepartmentId)
+                .defaultIfEmpty(DEFAULT_DEPARTMENT_ID); // If category not found, return default
     }
 }

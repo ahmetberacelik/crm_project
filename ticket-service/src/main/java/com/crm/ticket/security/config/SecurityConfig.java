@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         // Halka açık endpoint'ler
                         .pathMatchers(HttpMethod.POST, "/api/tickets/public").permitAll()
+                        .pathMatchers("/api/public/**").permitAll() // <-- YENİ KURAL
                         .pathMatchers("/actuator/**").permitAll()
                         // Diğer tüm istekler kimlik doğrulaması gerektirir
                         .anyExchange().authenticated()
