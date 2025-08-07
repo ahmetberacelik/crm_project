@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class PersonResponse {
-    private Long id;
+    private Long personId;
     private String name;
     private String surname;
     private String email;

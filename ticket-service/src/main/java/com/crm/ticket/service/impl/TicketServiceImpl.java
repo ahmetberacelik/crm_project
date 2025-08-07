@@ -171,7 +171,7 @@ public class TicketServiceImpl implements TicketService {
                 // Şimdi token ile client çağrısını yapıyoruz
                 return departmentClient.getPersonById(ticket.getCreatorId(), token)
                         .map(person -> TicketResponse.CreatorInfo.builder()
-                                .id(person.getId()).name(person.getName()).surname(person.getSurname())
+                                .id(person.getPersonId()).name(person.getName()).surname(person.getSurname())
                                 .email(person.getEmail()).type("EMPLOYEE").build())
                         .defaultIfEmpty(buildUnknownCreator(ticket.getCreatorId(), "Employee"));
             });
@@ -209,12 +209,12 @@ public class TicketServiceImpl implements TicketService {
             if (assignment.getPersonId() != null) {
                 assigneeInfoMono = departmentClient.getPersonById(assignment.getPersonId(), token)
                         .map(person -> TicketResponse.AssigneeInfo.builder()
-                                .id(person.getId()).name(person.getName() + " " + person.getSurname()).type("PERSON").build())
+                                .id(person.getPersonId()).name(person.getName() + " " + person.getSurname()).type("PERSON").build())
                         .defaultIfEmpty(buildUnknownAssignee(assignment.getPersonId(), "Person"));
             } else {
                 assigneeInfoMono = departmentClient.getDepartmentById(assignment.getDepartmentId(), token)
                         .map(department -> TicketResponse.AssigneeInfo.builder()
-                                .id(department.getId()).name(department.getName()).type("DEPARTMENT_POOL").build())
+                                .id(department.getDepartmentId()).name(department.getName()).type("DEPARTMENT_POOL").build())
                         .defaultIfEmpty(buildUnknownAssignee(assignment.getDepartmentId(), "Department"));
             }
 
