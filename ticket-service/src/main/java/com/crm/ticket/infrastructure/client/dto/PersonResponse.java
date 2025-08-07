@@ -8,4 +8,5 @@ public class PersonResponse {
     private String name;
     private String surname;
     private String email;
+    private Long departmentId;
 }

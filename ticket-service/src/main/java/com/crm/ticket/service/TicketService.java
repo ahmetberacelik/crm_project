@@ -29,4 +29,6 @@ public interface TicketService {
      * @return Ticket detayları.
      */
     Mono<TicketResponse> getTicketById(Long id);
+
+    Mono<TicketResponse> claimTicket(Long ticketId, Long employeeId);
 }

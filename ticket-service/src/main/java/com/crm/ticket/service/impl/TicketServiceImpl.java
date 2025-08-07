@@ -16,10 +16,12 @@ import com.crm.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -112,6 +114,50 @@ public class TicketServiceImpl implements TicketService {
         return ticketRepository.findById(id)
                 .flatMap(this::buildTicketResponse)
                 .switchIfEmpty(Mono.error(new RuntimeException("Ticket not found with id: " + id))); // Sonraki adımda bunu iyileştireceğiz
+    }
+
+    @Override
+    @Transactional
+    public Mono<TicketResponse> claimTicket(Long ticketId, Long employeeId) {
+        // 1. İlgili, açık ve havuzda olan atamayı bul
+        Mono<TicketAssignment> openPoolAssignmentMono = ticketAssignmentRepository
+                .findFirstByTicketIdAndStatusAndIsInPool(ticketId, "OPEN", true)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Claimable assignment not found for ticket id: " + ticketId)));
+
+        // 2. Çalışanın detaylarını ve departmanını department-service'ten al
+        //    (Token'ı HTTP isteğinden alacak şekilde DÜZELTİLDİ)
+        Mono<com.crm.ticket.infrastructure.client.dto.PersonResponse> personMono = Mono.deferContextual(ctx -> {
+            ServerWebExchange exchange = ctx.get(ServerWebExchange.class);
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header"));
+            }
+            String token = authHeader.substring(7);
+            return departmentClient.getPersonById(employeeId, token);
+        }).switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee details not found for id: " + employeeId)));
+
+        // 3. İki asenkron işlemi birleştir
+        return Mono.zip(openPoolAssignmentMono, personMono)
+                .flatMap(tuple -> {
+                    TicketAssignment assignment = tuple.getT1();
+                    var person = tuple.getT2();
+                    Long employeeDepartmentId = person.getDepartmentId();
+
+                    // 4. Doğrulama: Çalışan doğru departmanda mı?
+                    if (!assignment.getDepartmentId().equals(employeeDepartmentId)) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Employee cannot claim a ticket from another department's pool."));
+                    }
+
+                    // 5. Atamayı güncelle
+                    assignment.setIsInPool(false);
+                    assignment.setPersonId(employeeId);
+
+                    assignment.setStatus("IN_PROGRESS");
+
+                    return ticketAssignmentRepository.save(assignment);
+                })
+                // 6. Güncellenmiş ticket'ın tam yanıtını oluşturup dön
+                .flatMap(savedAssignment -> getTicketById(savedAssignment.getTicketId()));
     }
 
     /**

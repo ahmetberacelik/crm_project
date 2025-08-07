@@ -49,4 +49,20 @@ public class TicketController {
     public Mono<TicketResponse> getTicketById(@PathVariable Long id) {
         return ticketService.getTicketById(id);
     }
+
+    /**
+     * Bir çalışanın, kendi departman havuzundaki bir ticket'ı üstlenmesini sağlar.
+     * @param ticketId Üstlenilecek ticket'ın ID'si.
+     * @param employeeIdStr Token'dan gelen ve ticket'ı üstlenen çalışanın ID'si.
+     * @return Güncellenmiş TicketResponse.
+     */
+    @PostMapping("/{ticketId}/assignments/claim")
+    @PreAuthorize("hasRole('USER')")
+    public Mono<TicketResponse> claimTicket(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal String employeeIdStr) {
+
+        Long employeeId = Long.valueOf(employeeIdStr);
+        return ticketService.claimTicket(ticketId, employeeId);
+    }
 }
