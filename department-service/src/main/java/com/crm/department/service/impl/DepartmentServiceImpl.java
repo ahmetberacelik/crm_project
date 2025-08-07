@@ -7,7 +7,9 @@ import com.crm.department.data.entity.Department;
 import com.crm.department.data.repository.DepartmentRepository;
 import com.crm.department.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -72,6 +74,25 @@ public class DepartmentServiceImpl implements DepartmentService {
                     return departmentRepository.save(department);
                 })
                 .then();
+    }
+
+    /**
+     * Verilen ID'ye sahip tek bir departmanı bulur ve döndürür.
+     * @param id Aranacak departmanın ID'si.
+     * @return Departman bulunursa DepartmentTreeResponse, bulunamazsa 404 hatası döner.
+     */
+    @Override
+    public Mono<DepartmentTreeResponse> getDepartmentById(Long id) {
+        return departmentRepository.findById(id)
+                .map(department -> DepartmentTreeResponse.builder()
+                        .departmentId(department.getDepartmentId())
+                        .name(department.getName())
+                        // Bu DTO'da 'children' listesi olduğu için boş bir liste ile başlatıyoruz.
+                        .children(new java.util.ArrayList<>())
+                        .build())
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Department not found with id: " + id))
+                );
     }
 
     private List<DepartmentTreeResponse> buildTree(List<Department> deps) {

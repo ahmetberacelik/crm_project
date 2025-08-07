@@ -29,15 +29,15 @@ public class TicketController {
         return ticketService.createTicketFromCustomer(request);
     }
 
-    /**
-     * Sadece kimliği doğrulanmış ve 'ROLE_USER' yetkisine sahip çalışanlar için ticket oluşturma endpoint'i.
-     * @param jwt İstekle gelen ve doğrulanan JWT. Creator ID'yi buradan alacağız.
-     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('USER')")
-    public Mono<TicketResponse> createEmployeeTicket(@Valid @RequestBody CreateTicketEmployeeRequest request, @AuthenticationPrincipal Jwt jwt) {
-        Long creatorId = Long.valueOf(jwt.getSubject()); // JWT'nin 'sub' (subject) alanı user ID'yi tutar.
+    public Mono<TicketResponse> createEmployeeTicket(
+            @Valid @RequestBody CreateTicketEmployeeRequest request,
+            @AuthenticationPrincipal String username // DOĞRUSU: String bekleniyor
+    ) {
+        // Artık 'username' (veya ID), filtrenizin sağladığı String değerini içeriyor.
+        Long creatorId = Long.valueOf(username);
         return ticketService.createTicketFromEmployee(request, creatorId);
     }
 

@@ -39,4 +39,9 @@ public class DepartmentController {
     public Mono<Void> delete(@PathVariable Long id) {
         return departmentService.deleteDepartment(id);
     }
+
+    @GetMapping("/{id}")
+    public Mono<DepartmentTreeResponse> getDepartmentById(@PathVariable Long id) {
+        return departmentService.getDepartmentById(id);
+    }
 }

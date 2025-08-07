@@ -15,8 +15,12 @@ import com.crm.ticket.infrastructure.client.DepartmentClient;
 import com.crm.ticket.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -142,70 +146,85 @@ public class TicketServiceImpl implements TicketService {
                 });
     }
 
-    /**
-     * Fetches creator info based on whether the creator is an employee or a customer.
-     */
-    private Mono<TicketResponse.CreatorInfo> getCreatorInfo(Ticket ticket) {
-        if (ticket.getIsEmployee()) {
-            // If creator is an employee, get person details from department-service
-            return departmentClient.getPersonById(ticket.getCreatorId())
-                    .map(person -> TicketResponse.CreatorInfo.builder()
-                            .id(person.getId())
-                            .name(person.getName())
-                            .surname(person.getSurname())
-                            .email(person.getEmail())
-                            .type("EMPLOYEE")
-                            .build())
-                    .defaultIfEmpty(buildUnknownCreator(ticket.getCreatorId(), "Employee")); // Fallback
-        } else {
-            // If creator is a customer, get details from local customer table
-            return customerRepository.findById(ticket.getCreatorId())
-                    .map(customer -> TicketResponse.CreatorInfo.builder()
-                            .id(customer.getId())
-                            .name(customer.getName())
-                            .surname(customer.getSurname())
-                            .email(customer.getEmail())
-                            .type("CUSTOMER")
-                            .build())
-                    .defaultIfEmpty(buildUnknownCreator(ticket.getCreatorId(), "Customer")); // Fallback
+        /**
+         * Fetches creator info based on whether the creator is an employee or a customer.
+         */
+        private Mono<TicketResponse.CreatorInfo> getCreatorInfo(Ticket ticket) {
+            if (!ticket.getIsEmployee()) {
+                return customerRepository.findById(ticket.getCreatorId())
+                        .map(customer -> TicketResponse.CreatorInfo.builder()
+                                .id(customer.getId()).name(customer.getName()).surname(customer.getSurname())
+                                .email(customer.getEmail()).type("CUSTOMER").build())
+                        .defaultIfEmpty(buildUnknownCreator(ticket.getCreatorId(), "Customer"));
+            }
+
+            // Context'ten isteğin kendisini (ServerWebExchange) alıyoruz
+            return Mono.deferContextual(ctx -> {
+                ServerWebExchange exchange = ctx.get(ServerWebExchange.class);
+                // İstekten Authorization başlığını ve token'ı alıyoruz
+                String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                    return Mono.just(buildUnknownCreator(ticket.getCreatorId(), "Employee"));
+                }
+                String token = authHeader.substring(7);
+
+                // Şimdi token ile client çağrısını yapıyoruz
+                return departmentClient.getPersonById(ticket.getCreatorId(), token)
+                        .map(person -> TicketResponse.CreatorInfo.builder()
+                                .id(person.getId()).name(person.getName()).surname(person.getSurname())
+                                .email(person.getEmail()).type("EMPLOYEE").build())
+                        .defaultIfEmpty(buildUnknownCreator(ticket.getCreatorId(), "Employee"));
+            });
         }
-    }
 
     /**
      * Enriches a single TicketAssignment with the name of the assignee (person or department).
      */
     private Mono<TicketResponse.AssignmentInfo> buildAssignmentInfo(TicketAssignment assignment) {
-        Mono<TicketResponse.AssigneeInfo> assigneeInfoMono;
+        // Context'ten isteğin kendisini (ServerWebExchange) alıyoruz
+        return Mono.deferContextual(ctx -> {
+            ServerWebExchange exchange = ctx.get(ServerWebExchange.class);
+            // İstekten Authorization başlığını ve token'ı alıyoruz
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-        if (assignment.getPersonId() != null) {
-            // If assigned to a specific person, get their name
-            assigneeInfoMono = departmentClient.getPersonById(assignment.getPersonId())
-                    .map(person -> TicketResponse.AssigneeInfo.builder()
-                            .id(person.getId())
-                            .name(person.getName() + " " + person.getSurname())
-                            .type("PERSON")
-                            .build())
-                    .defaultIfEmpty(buildUnknownAssignee(assignment.getPersonId(), "Person")); // Fallback
-        } else {
-            // If assigned to a department pool, get the department's name
-            assigneeInfoMono = departmentClient.getDepartmentById(assignment.getDepartmentId())
-                    .map(department -> TicketResponse.AssigneeInfo.builder()
-                            .id(department.getId())
-                            .name(department.getName())
-                            .type("DEPARTMENT_POOL")
-                            .build())
-                    .defaultIfEmpty(buildUnknownAssignee(assignment.getDepartmentId(), "Department")); // Fallback
-        }
-
-        return assigneeInfoMono.map(assigneeInfo ->
-                TicketResponse.AssignmentInfo.builder()
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                // HATA BURADA DÜZELTİLDİ:
+                // Önce bilinmeyen bir AssigneeInfo oluşturuyoruz.
+                TicketResponse.AssigneeInfo unknownAssignee = buildUnknownAssignee(
+                        assignment.getDepartmentId() != null ? assignment.getDepartmentId() : assignment.getPersonId(),
+                        "Unknown"
+                );
+                // Sonra bunu tam bir AssignmentInfo nesnesinin içine koyup Mono olarak dönüyoruz.
+                return Mono.just(TicketResponse.AssignmentInfo.builder()
                         .assignmentId(assignment.getId())
                         .status(assignment.getStatus())
                         .assignedDate(assignment.getAssignedDate())
-                        .completedDate(assignment.getCompletedDate())
-                        .assignee(assigneeInfo)
-                        .build()
-        );
+                        .assignee(unknownAssignee)
+                        .build());
+            }
+            String token = authHeader.substring(7);
+
+            Mono<TicketResponse.AssigneeInfo> assigneeInfoMono;
+
+            if (assignment.getPersonId() != null) {
+                assigneeInfoMono = departmentClient.getPersonById(assignment.getPersonId(), token)
+                        .map(person -> TicketResponse.AssigneeInfo.builder()
+                                .id(person.getId()).name(person.getName() + " " + person.getSurname()).type("PERSON").build())
+                        .defaultIfEmpty(buildUnknownAssignee(assignment.getPersonId(), "Person"));
+            } else {
+                assigneeInfoMono = departmentClient.getDepartmentById(assignment.getDepartmentId(), token)
+                        .map(department -> TicketResponse.AssigneeInfo.builder()
+                                .id(department.getId()).name(department.getName()).type("DEPARTMENT_POOL").build())
+                        .defaultIfEmpty(buildUnknownAssignee(assignment.getDepartmentId(), "Department"));
+            }
+
+            return assigneeInfoMono.map(assigneeInfo ->
+                    TicketResponse.AssignmentInfo.builder()
+                            .assignmentId(assignment.getId()).status(assignment.getStatus())
+                            .assignedDate(assignment.getAssignedDate()).completedDate(assignment.getCompletedDate())
+                            .assignee(assigneeInfo).build()
+            );
+        });
     }
 
     // Fallback method in case an entity is not found in the other service

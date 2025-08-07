@@ -1,5 +1,6 @@
 package com.crm.user.security.jwt;
 
+import com.crm.user.data.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -46,12 +47,17 @@ public class JwtUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        User user = (User) userDetails;
         // Extract roles from authorities and add them to the token
         String roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         claims.put("roles", roles);
-        return generateToken(claims, userDetails.getUsername());
+        // YENİ: Kullanıcı adını "username" adıyla özel bir claim olarak ekle
+        claims.put("username", user.getUsername());
+
+        // Token'ın subject'i olarak KULLANICI ID'SİNİ ata.
+        return generateToken(claims, String.valueOf(user.getUserId()));
     }
 
     public String generateToken(Map<String, Object> extraClaims, String username) {

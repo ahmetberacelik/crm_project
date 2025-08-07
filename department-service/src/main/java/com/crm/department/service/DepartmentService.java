@@ -11,4 +11,5 @@ public interface DepartmentService {
     Mono<DepartmentTreeResponse> createDepartment(DepartmentCreateRequest request);
     Mono<DepartmentTreeResponse> updateDepartment(Long id, DepartmentUpdateRequest request);
     Mono<Void> deleteDepartment(Long id);
+    Mono<DepartmentTreeResponse> getDepartmentById(Long id);
 }
