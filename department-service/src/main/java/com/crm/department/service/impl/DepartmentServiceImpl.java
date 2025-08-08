@@ -83,7 +83,7 @@ public class DepartmentServiceImpl implements DepartmentService {
      */
     @Override
     public Mono<DepartmentTreeResponse> getDepartmentById(Long id) {
-        return departmentRepository.findById(id)
+        return departmentRepository.findByDepartmentIdAndIsDeletedFalse(id)
                 .map(department -> DepartmentTreeResponse.builder()
                         .departmentId(department.getDepartmentId())
                         .name(department.getName())
@@ -91,7 +91,7 @@ public class DepartmentServiceImpl implements DepartmentService {
                         .children(new java.util.ArrayList<>())
                         .build())
                 .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Department not found with id: " + id))
+                        HttpStatus.NOT_FOUND, "Active department not found with id: " + id))
                 );
     }
 

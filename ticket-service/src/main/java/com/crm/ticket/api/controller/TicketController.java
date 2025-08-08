@@ -2,6 +2,7 @@ package com.crm.ticket.api.controller;
 
 import com.crm.ticket.api.dto.request.CreateTicketEmployeeRequest;
 import com.crm.ticket.api.dto.request.CreateTicketPublicRequest;
+import com.crm.ticket.api.dto.request.ReassignTicketRequest;
 import com.crm.ticket.api.dto.response.TicketResponse;
 import com.crm.ticket.service.TicketService;
 import jakarta.validation.Valid;
@@ -80,5 +81,23 @@ public class TicketController {
 
         Long employeeId = Long.valueOf(employeeIdStr);
         return ticketService.closeTicket(ticketId, employeeId);
+    }
+
+    /**
+     * Bir çalışanın, kendisine atanmış olan bir ticket'ı başka bir departmanın havuzuna yönlendirmesini sağlar.
+     * @param ticketId Yönlendirilecek ticket'ın ID'si.
+     * @param request Yeni departman ID'sini içeren request body.
+     * @param employeeIdStr Token'dan gelen ve işlemi yapan çalışanın ID'si.
+     * @return Güncellenmiş TicketResponse.
+     */
+    @PostMapping("/{ticketId}/assignments/reassign")
+    @PreAuthorize("hasRole('USER')")
+    public Mono<TicketResponse> reassignTicket(
+            @PathVariable Long ticketId,
+            @Valid @RequestBody ReassignTicketRequest request,
+            @AuthenticationPrincipal String employeeIdStr) {
+
+        Long employeeId = Long.valueOf(employeeIdStr);
+        return ticketService.reassignTicket(ticketId, request.getNewDepartmentId(), employeeId);
     }
 }

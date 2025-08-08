@@ -1,5 +1,0 @@
-ALTER TABLE users ADD role VARCHAR(50);
-GO
-
-UPDATE users SET role = 'ROLE_USER' WHERE role IS NULL;
-GO

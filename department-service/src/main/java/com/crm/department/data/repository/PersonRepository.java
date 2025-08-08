@@ -22,6 +22,6 @@ public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
     @Query("SELECT * FROM persons WHERE isActive = 0")
     Flux<Person> findAllByIsActiveFalse();
 
-    @Query("SELECT * FROM persons WHERE person_id = :person_id AND isActive = 1")
+    @Query("SELECT * FROM persons WHERE person_id = :personId AND isActive = 1")
     Mono<Person> findByPersonIdAndIsActiveTrue(@Param("person_id") Long personId);
 }

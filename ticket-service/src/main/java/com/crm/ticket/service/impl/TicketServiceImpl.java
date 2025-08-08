@@ -185,6 +185,34 @@ public class TicketServiceImpl implements TicketService {
                 .flatMap(this::buildTicketResponse);
     }
 
+    @Override
+    @Transactional
+    public Mono<TicketResponse> reassignTicket(Long ticketId, Long newDepartmentId, Long employeeId) {
+        // 1. Çalışana atanmış ve havuzda olmayan atamayı bul
+        return ticketAssignmentRepository.findFirstByTicketIdAndPersonIdAndIsInPool(ticketId, employeeId, false)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Ticket is not assigned to this employee or cannot be reassigned.")))
+                .flatMap(currentAssignment -> {
+                    // 3. Mevcut atamayı kapat
+                    currentAssignment.setStatus("REASSIGNED"); // Durumu "Yeniden Atandı" olarak değiştir
+                    currentAssignment.setCompletedDate(LocalDateTime.now());
+
+                    // 4. Yeni departman havuzu için yeni bir atama oluştur
+                    TicketAssignment newAssignment = TicketAssignment.builder()
+                            .ticketId(ticketId)
+                            .isInPool(true)
+                            .departmentId(newDepartmentId)
+                            .assignedDate(LocalDateTime.now())
+                            .status("OPEN")
+                            .build();
+
+                    // 5. Eski atamayı güncellemeyi ve yeni atamayı kaydetmeyi birleştir
+                    return ticketAssignmentRepository.save(currentAssignment)
+                            .then(ticketAssignmentRepository.save(newAssignment));
+                })
+                // 6. Güncellenmiş ticket'ın tam yanıtını oluşturup dön
+                .flatMap(newAssignment -> getTicketById(newAssignment.getTicketId()));
+    }
+
     /**
      * Assembles the full TicketResponse by fetching additional data from other services.
      * This method is now the core of the service's read logic.

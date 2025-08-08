@@ -15,6 +15,6 @@ public interface DepartmentRepository extends ReactiveCrudRepository<Department,
     @Query("SELECT * FROM departments WHERE isDeleted = 0")
     Flux<Department> findAllByIsDeletedFalse();
 
-    @Query("SELECT * FROM departments WHERE department_id = :department_id AND isDeleted = 0")
-    Mono<Department> findByDepartmentIdAndIsDeletedFalse(@Param("person_id") Long departmentId);
+    @Query("SELECT * FROM departments WHERE department_id = :departmentId AND isDeleted = 0")
+    Mono<Department> findByDepartmentIdAndIsDeletedFalse(@Param("department_id") Long departmentId);
 }
