@@ -65,4 +65,20 @@ public class TicketController {
         Long employeeId = Long.valueOf(employeeIdStr);
         return ticketService.claimTicket(ticketId, employeeId);
     }
+
+    /**
+     * Bir çalışanın, kendisine atanmış olan bir ticket'ı kapatmasını sağlar.
+     * @param ticketId Kapatılacak ticket'ın ID'si.
+     * @param employeeIdStr Token'dan gelen ve ticket'ı kapatan çalışanın ID'si.
+     * @return Güncellenmiş TicketResponse.
+     */
+    @PostMapping("/{ticketId}/assignments/close")
+    @PreAuthorize("hasRole('USER')")
+    public Mono<TicketResponse> closeTicket(
+            @PathVariable Long ticketId,
+            @AuthenticationPrincipal String employeeIdStr) {
+
+        Long employeeId = Long.valueOf(employeeIdStr);
+        return ticketService.closeTicket(ticketId, employeeId);
+    }
 }

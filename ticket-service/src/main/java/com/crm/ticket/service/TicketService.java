@@ -31,4 +31,6 @@ public interface TicketService {
     Mono<TicketResponse> getTicketById(Long id);
 
     Mono<TicketResponse> claimTicket(Long ticketId, Long employeeId);
+
+    Mono<TicketResponse> closeTicket(Long ticketId, Long employeeId);
 }

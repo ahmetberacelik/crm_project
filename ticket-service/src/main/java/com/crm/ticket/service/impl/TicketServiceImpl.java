@@ -160,6 +160,31 @@ public class TicketServiceImpl implements TicketService {
                 .flatMap(savedAssignment -> getTicketById(savedAssignment.getTicketId()));
     }
 
+    @Override
+    @Transactional
+    public Mono<TicketResponse> closeTicket(Long ticketId, Long employeeId) {
+        // 1. Çalışana atanmış ve havuzda olmayan atamayı bul
+        return ticketAssignmentRepository.findFirstByTicketIdAndPersonIdAndIsInPool(ticketId, employeeId, false)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Ticket is not assigned to this employee or is already closed/in pool.")))
+                .flatMap(assignment -> {
+                    // 2. Atama durumunu güncelle
+                    assignment.setStatus("CLOSED");
+                    assignment.setCompletedDate(LocalDateTime.now());
+
+                    // 3. Ana ticket durumunu güncelle
+                    Mono<Ticket> ticketMono = ticketRepository.findById(ticketId)
+                            .flatMap(ticket -> {
+                                ticket.setIsActive(false);
+                                ticket.setClosedDate(LocalDateTime.now());
+                                return ticketRepository.save(ticket);
+                            });
+
+                    return ticketAssignmentRepository.save(assignment).then(ticketMono);
+                })
+                // 4. Güncellenmiş ticket'ın tam yanıtını oluşturup dön
+                .flatMap(this::buildTicketResponse);
+    }
+
     /**
      * Assembles the full TicketResponse by fetching additional data from other services.
      * This method is now the core of the service's read logic.

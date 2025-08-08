@@ -3,6 +3,7 @@ package com.crm.department.data.repository;
 
 import com.crm.department.data.entity.Department;
 import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -15,5 +16,5 @@ public interface DepartmentRepository extends ReactiveCrudRepository<Department,
     Flux<Department> findAllByIsDeletedFalse();
 
     @Query("SELECT * FROM departments WHERE department_id = :department_id AND isDeleted = 0")
-    Mono<Department> findByDepartmentIdAndIsDeletedFalse(Long departmentId);
+    Mono<Department> findByDepartmentIdAndIsDeletedFalse(@Param("person_id") Long departmentId);
 }
