@@ -1,0 +1,71 @@
+# ---- OS & Editor junk ----
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+Icon?
+
+# ---- IDEs & project files ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+.history/
+
+# ---- Build output ----
+target/
+out/
+bin/
+
+# ---- Java artifacts ----
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Keep the PlantUML jar that is intentionally stored in docs
+!docs/plantuml.jar
+
+# ---- Maven specifics ----
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.flattened-pom.xml
+
+# ---- Logs ----
+*.log
+logs/
+*.out
+
+# ---- Test & coverage reports ----
+surefire-reports/
+failsafe-reports/
+jacoco.exec
+jacoco/
+coverage/
+
+# ---- Environment files ----
+.env
+.env.*
+!.env.example
+
+# ---- Docker local overrides ----
+docker-compose.override.yml
+
+# ---- Node (if any tooling/scripts) ----
+node_modules/
+
+# ---- Office temporary lock files ----
+~$*
+
+

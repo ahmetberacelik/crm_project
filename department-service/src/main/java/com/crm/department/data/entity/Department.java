@@ -8,6 +8,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * Represents a record in the 'departments' table.
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,11 +22,13 @@ public class Department {
     @Column("department_id")
     private Long departmentId;
 
+    @Column("name")
     private String name;
 
     @Column("parent_department_id")
     private Long parentDepartmentId;
 
+    // Note: Migration uses camelCase column names such as 'isActive'.
     @Column("isActive")
     private Boolean isActive;
 
@@ -39,3 +44,5 @@ public class Department {
     @Column("updated_user_id")
     private Long updatedUserId;
 }
+
+

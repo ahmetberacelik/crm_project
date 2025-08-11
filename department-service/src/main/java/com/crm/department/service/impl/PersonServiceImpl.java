@@ -4,7 +4,6 @@ import com.crm.department.api.dto.request.PersonCreateRequest;
 import com.crm.department.api.dto.request.PersonUpdateRequest;
 import com.crm.department.api.dto.response.PersonResponse;
 import com.crm.department.data.entity.Person;
-import com.crm.department.data.repository.DepartmentRepository;
 import com.crm.department.data.repository.PersonRepository;
 import com.crm.department.service.PersonService;
 import lombok.RequiredArgsConstructor;
@@ -17,74 +16,73 @@ import reactor.core.publisher.Mono;
 public class PersonServiceImpl implements PersonService {
 
     private final PersonRepository personRepository;
-    private final DepartmentRepository departmentRepository;
 
     @Override
-    public Mono<PersonResponse> createPerson(PersonCreateRequest request) {
-        return departmentRepository.findByDepartmentIdAndIsDeletedFalse(request.getDepartmentId())
-                .switchIfEmpty(Mono.error(new RuntimeException("Department not found with ID: " + request.getDepartmentId())))
-                .flatMap(department -> personRepository.findByEmail(request.getEmail())
-                        .hasElement()
-                        .flatMap(exists -> {
-                            if (exists) {
-                                return Mono.error(new RuntimeException("Email already exists: " + request.getEmail()));
-                            }
-                            Person entity = Person.builder()
-                                    .name(request.getName())
-                                    .surname(request.getSurname())
-                                    .email(request.getEmail())
-                                    .phone(request.getPhone())
-                                    .departmentId(request.getDepartmentId())
-                                    .isActive(true)
-                                    .build();
-                            return personRepository.save(entity)
-                                    .map(this::toPersonResponse);
-                        }));
+    public Flux<PersonResponse> getActivePersons() {
+        return personRepository.findAllActive().map(this::toResponse);
     }
 
     @Override
-    public Flux<PersonResponse> findAll() {
-        return personRepository.findAllByIsActiveTrue().map(this::toPersonResponse);
+    public Flux<PersonResponse> getAllPersons() {
+        return personRepository.findAll().map(this::toResponse);
     }
 
     @Override
-    public Mono<PersonResponse> findById(Long id) {
-        return personRepository.findByPersonIdAndIsActiveTrue(id)
-                .map(this::toPersonResponse)
-                .switchIfEmpty(Mono.error(new RuntimeException("Active person not found with id: " + id)));
+    public Flux<PersonResponse> getInactivePersons() {
+        return personRepository.findAllInactive().map(this::toResponse);
     }
 
     @Override
-    public Mono<PersonResponse> updatePerson(Long id, PersonUpdateRequest request) {
-        return personRepository.findByPersonIdAndIsActiveTrue(id)
-                .switchIfEmpty(Mono.error(new RuntimeException("Active person not found with id: " + id)))
-                .flatMap(person -> {
-                    // Check if the new department exists
-                    return departmentRepository.findByDepartmentIdAndIsDeletedFalse(request.getDepartmentId())
-                            .switchIfEmpty(Mono.error(new RuntimeException("New department not found with id: " + request.getDepartmentId())))
-                            .flatMap(department -> {
-                                person.setName(request.getName());
-                                person.setSurname(request.getSurname());
-                                person.setEmail(request.getEmail());
-                                person.setPhone(request.getPhone());
-                                person.setDepartmentId(request.getDepartmentId());
-                                return personRepository.save(person);
-                            });
+    public Mono<PersonResponse> getActiveById(Long id) {
+        return personRepository.findActiveById(id).map(this::toResponse);
+    }
+
+    @Override
+    public Mono<PersonResponse> create(PersonCreateRequest request) {
+        Person p = Person.builder()
+                .name(request.getName())
+                .surname(request.getSurname())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .departmentId(request.getDepartmentId())
+                .isActive(true)
+                .build();
+        return personRepository.save(p).map(this::toResponse);
+    }
+
+    @Override
+    public Mono<PersonResponse> update(Long id, PersonUpdateRequest request) {
+        return personRepository.findById(id)
+                .flatMap(p -> {
+                    p.setName(request.getName());
+                    p.setSurname(request.getSurname());
+                    p.setEmail(request.getEmail());
+                    p.setPhone(request.getPhone());
+                    if (request.getDepartmentId() != null) {
+                        p.setDepartmentId(request.getDepartmentId());
+                    }
+                    return personRepository.save(p);
                 })
-                .map(this::toPersonResponse);
+                .map(this::toResponse);
     }
 
     @Override
-    public Mono<Void> deletePerson(Long id) {
-        return personRepository.findByPersonIdAndIsActiveTrue(id)
-                .switchIfEmpty(Mono.error(new RuntimeException("Active person not found with id: " + id)))
-                .flatMap(person -> {
-                    person.setIsActive(false);
-                    return personRepository.save(person);
-                }).then();
+    public Mono<Void> deactivate(Long id) {
+        return personRepository.findById(id)
+                .flatMap(p -> {
+                    p.setIsActive(false);
+                    return personRepository.save(p);
+                })
+                .then();
     }
 
-    private PersonResponse toPersonResponse(Person person) {
+    @Override
+    public Mono<PersonResponse> internalRegister(PersonCreateRequest request) {
+        // For internal register, behave same as create; uniqueness by email handled by DB unique constraint
+        return create(request);
+    }
+
+    private PersonResponse toResponse(Person person) {
         return PersonResponse.builder()
                 .personId(person.getPersonId())
                 .name(person.getName())
@@ -94,30 +92,6 @@ public class PersonServiceImpl implements PersonService {
                 .departmentId(person.getDepartmentId())
                 .build();
     }
-
-    // --- ADMIN-SPECIFIC METHODS ---
-
-    @Override
-    public Flux<PersonResponse> findAllWithInactive() {
-        return personRepository.findAll().map(this::toPersonResponse);
-    }
-
-    @Override
-    public Flux<PersonResponse> findAllInactive() {
-        return personRepository.findAllByIsActiveFalse().map(this::toPersonResponse);
-    }
-
-    @Override
-    public Mono<PersonResponse> reactivatePerson(Long id) {
-        return personRepository.findById(id) // Find any person, active or not
-                .switchIfEmpty(Mono.error(new RuntimeException("Person not found with id: " + id)))
-                .flatMap(person -> {
-                    if (person.getIsActive()) {
-                        return Mono.error(new RuntimeException("Person with id: " + id + " is already active."));
-                    }
-                    person.setIsActive(true);
-                    return personRepository.save(person);
-                })
-                .map(this::toPersonResponse);
-    }
 }
+
+

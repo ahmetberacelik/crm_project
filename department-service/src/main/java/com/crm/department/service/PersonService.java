@@ -7,15 +7,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface PersonService {
-    // Standard User methods
-    Mono<PersonResponse> createPerson(PersonCreateRequest request);
-    Flux<PersonResponse> findAll();
-    Mono<PersonResponse> findById(Long id);
-    Mono<PersonResponse> updatePerson(Long id, PersonUpdateRequest request);
-    Mono<Void> deletePerson(Long id);
-
-    // Admin-specific methods
-    Flux<PersonResponse> findAllWithInactive();
-    Flux<PersonResponse> findAllInactive();
-    Mono<PersonResponse> reactivatePerson(Long id);
+    Flux<PersonResponse> getActivePersons();
+    Flux<PersonResponse> getAllPersons();
+    Flux<PersonResponse> getInactivePersons();
+    Mono<PersonResponse> getActiveById(Long id);
+    Mono<PersonResponse> create(PersonCreateRequest request);
+    Mono<PersonResponse> update(Long id, PersonUpdateRequest request);
+    Mono<Void> deactivate(Long id);
+    Mono<PersonResponse> internalRegister(PersonCreateRequest request);
 }
+
+

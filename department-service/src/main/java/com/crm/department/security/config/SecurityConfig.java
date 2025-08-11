@@ -31,26 +31,14 @@ public class SecurityConfig {
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/api/internal/**").permitAll() // Allow internal service-to-service communication
-                        
-                        // Departments API
-                        .pathMatchers(HttpMethod.GET, "/api/departments/**").authenticated()
-                        .pathMatchers(HttpMethod.POST, "/api/departments").hasAuthority("ROLE_ADMIN")
-                        .pathMatchers(HttpMethod.PUT, "/api/departments/**").hasAuthority("ROLE_ADMIN")
-                        .pathMatchers(HttpMethod.DELETE, "/api/departments/**").hasAuthority("ROLE_ADMIN")
-                        
-                        // Persons API
-                        .pathMatchers("/api/persons/internal/**").permitAll() // Allow registration flow
-                        .pathMatchers(HttpMethod.GET, "/api/persons/all").hasAuthority("ROLE_ADMIN")
-                        .pathMatchers(HttpMethod.GET, "/api/persons/inactive").hasAuthority("ROLE_ADMIN")
-                        .pathMatchers(HttpMethod.PUT, "/api/persons/{id}/reactivate").hasAuthority("ROLE_ADMIN")
-                        .pathMatchers(HttpMethod.POST, "/api/persons").hasAuthority("ROLE_ADMIN") // Only admins can create new persons directly
-                        .pathMatchers("/api/persons/**").authenticated()
-
-                        // Deny any other unauthenticated access
+                        .pathMatchers("/actuator/**").permitAll()
+                        // Internal endpoint deliberately left open for user-service registration flow
+                        .pathMatchers(HttpMethod.POST, "/api/persons/internal/register").permitAll()
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 }
+
+

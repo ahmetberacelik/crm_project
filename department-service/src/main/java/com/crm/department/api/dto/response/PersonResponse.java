@@ -1,14 +1,10 @@
 package com.crm.department.api.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class PersonResponse {
     private Long personId;
     private String name;
@@ -17,3 +13,5 @@ public class PersonResponse {
     private String phone;
     private Long departmentId;
 }
+
+

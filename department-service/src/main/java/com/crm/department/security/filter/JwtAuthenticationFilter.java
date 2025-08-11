@@ -27,7 +27,6 @@ public class JwtAuthenticationFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return chain.filter(exchange);
         }
@@ -38,7 +37,6 @@ public class JwtAuthenticationFilter implements WebFilter {
             if (!jwtUtil.isTokenExpired(token)) {
                 String username = jwtUtil.extractUsername(token);
                 String rolesString = jwtUtil.extractRoles(token);
-                
                 List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesString.split(","))
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
@@ -47,10 +45,11 @@ public class JwtAuthenticationFilter implements WebFilter {
                 SecurityContext context = new SecurityContextImpl(authentication);
                 return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)));
             }
-        } catch (Exception e) {
-            // Token is invalid, proceed without authentication
+        } catch (Exception ignored) {
         }
 
         return chain.filter(exchange);
     }
 }
+
+

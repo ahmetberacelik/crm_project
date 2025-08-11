@@ -55,8 +55,7 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-mssql</artifactId>
+            <groupId>io.r2dbc</groupId> <artifactId>r2dbc-mssql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
