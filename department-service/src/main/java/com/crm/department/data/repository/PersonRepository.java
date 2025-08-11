@@ -11,9 +11,11 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface PersonRepository extends ReactiveCrudRepository<Person, Long> {
 
-    Mono<Person> findByEmail(String email);
+    @Query("SELECT person_id, name, surname, email, phone, department_id, isActive FROM persons WHERE email = :email")
+    Mono<Person> findByEmail(@Param("email") String email);
 
-    Flux<Person> findByDepartmentId(Long departmentId);
+    @Query("SELECT person_id, name, surname, email, phone, department_id, isActive FROM persons WHERE department_id = :departmentId")
+    Flux<Person> findByDepartmentId(@Param("departmentId") Long departmentId);
 
     // Listing helpers for API use-cases
     Flux<Person> findAllByIsActiveTrue();

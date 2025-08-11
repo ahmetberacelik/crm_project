@@ -11,8 +11,10 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface DepartmentRepository extends ReactiveCrudRepository<Department, Long> {
 
-    Flux<Department> findByParentDepartmentId(Long parentDepartmentId);
+    @Query("SELECT department_id, name, parent_department_id, isActive, isDeleted, deleted_user_id, isUpdated, updated_user_id FROM departments WHERE parent_department_id = :parentDepartmentId")
+    Flux<Department> findByParentDepartmentId(@Param("parentDepartmentId") Long parentDepartmentId);
 
+    @Query("SELECT department_id, name, parent_department_id, isActive, isDeleted, deleted_user_id, isUpdated, updated_user_id FROM departments WHERE isActive = 1")
     Flux<Department> findAllByIsActiveTrue();
 
     // Avoid default findById parameter name mismatch by using property-based finder
