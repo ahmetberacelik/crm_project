@@ -132,4 +132,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private record UserWithRefresh(User user, String refreshToken) {}
+
+    @Override
+    public Mono<Void> logout(Long userId) {
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.empty())
+                .flatMap(user -> {
+                    user.setRefreshTokenHash(null);
+                    user.setRefreshTokenExpiresAt(null);
+                    return userRepository.save(user).then();
+                });
+    }
 }

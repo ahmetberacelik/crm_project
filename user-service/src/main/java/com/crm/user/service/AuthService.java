@@ -29,4 +29,9 @@ public interface AuthService {
      * Refresh access token using a valid refresh token
      */
     Mono<AuthResponse> refresh(RefreshTokenRequest request);
+
+    /**
+     * Logout the currently authenticated user by invalidating refresh token
+     */
+    Mono<Void> logout(Long userId);
 }
