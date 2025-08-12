@@ -25,7 +25,8 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     public Mono<DepartmentResponse> getById(Long id) {
-        return departmentRepository.findByDepartmentId(id).map(this::toResponse);
+        // Özel @Query yerine built-in findById kullanarak parametre karışıklığını engelle
+        return departmentRepository.findById(id).map(this::toResponse);
     }
 
     @Override
