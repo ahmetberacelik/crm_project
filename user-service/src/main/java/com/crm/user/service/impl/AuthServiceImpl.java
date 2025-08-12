@@ -20,6 +20,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final WebClient departmentWebClient;
 
-    private static final long DEFAULT_REFRESH_TOKEN_TTL_DAYS = 7L;
+    @Value("${app.jwt.refresh-ttl-days}")
+    private long refreshTtlDays;
 
     @Override
     public Mono<AuthResponse> login(LoginRequest request) {
@@ -110,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
         String newRefreshToken = generateRefreshTokenForUser(user.getUserId());
         String newRefreshHash = passwordEncoder.encode(newRefreshToken);
         user.setRefreshTokenHash(newRefreshHash);
-        user.setRefreshTokenExpiresAt(LocalDateTime.now().plusDays(DEFAULT_REFRESH_TOKEN_TTL_DAYS));
+        user.setRefreshTokenExpiresAt(LocalDateTime.now().plusDays(refreshTtlDays));
         return userRepository.save(user).map(saved -> new UserWithRefresh(saved, newRefreshToken));
     }
 
