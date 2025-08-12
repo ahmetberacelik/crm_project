@@ -19,4 +19,9 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
      */
     Mono<User> findByUserName(String userName);
 
+    /**
+     * Finds a user by the stored refresh token hash
+     */
+    Mono<User> findByRefreshTokenHash(String refreshTokenHash);
+
 }

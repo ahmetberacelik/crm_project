@@ -2,6 +2,7 @@ package com.crm.user.api.controller;
 
 import com.crm.user.api.dto.request.LoginRequest;
 import com.crm.user.api.dto.request.RegisterRequest;
+import com.crm.user.api.dto.request.RefreshTokenRequest;
 import com.crm.user.api.dto.response.AuthResponse;
 import com.crm.user.service.AuthService;
 import jakarta.validation.Valid;
@@ -27,5 +28,10 @@ public class AuthController {
     @PostMapping("/register")
     public Mono<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return authService.registerUser(request);
+    }
+
+    @PostMapping("/refresh")
+    public Mono<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return authService.refresh(request);
     }
 }

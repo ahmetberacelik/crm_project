@@ -2,6 +2,7 @@ package com.crm.user.service.impl;
 
 import com.crm.user.api.dto.request.LoginRequest;
 import com.crm.user.api.dto.request.RegisterRequest;
+import com.crm.user.api.dto.request.RefreshTokenRequest;
 import com.crm.user.api.dto.response.AuthResponse;
 import com.crm.user.data.entity.User;
 import com.crm.user.data.repository.UserRepository;
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Map;
 
 @Service
@@ -27,11 +31,16 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final WebClient departmentWebClient;
 
+    private static final long DEFAULT_REFRESH_TOKEN_TTL_DAYS = 7L;
+
     @Override
     public Mono<AuthResponse> login(LoginRequest request) {
         return authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword())
-        ).map(auth -> AuthResponse.builder().token(jwtUtil.generateToken((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal())).build());
+                        new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword())
+                )
+                .cast(org.springframework.security.core.Authentication.class)
+                .flatMap(auth -> userRepository.findByUserName(request.getUserName()))
+                .flatMap(user -> issueTokensForUser(user));
     }
 
     @Override
@@ -59,11 +68,68 @@ public class AuthServiceImpl implements AuthService {
                                         .userName(request.getUserName())
                                         .passwordHash(passwordEncoder.encode(request.getPassword()))
                                         .personId(personId)
-                                        .role("ROLE_USER") // Assign default role
+                                        .role("ROLE_USER")
                                         .build();
-                                return userRepository.save(user)
-                                        .map(saved -> AuthResponse.builder().token(jwtUtil.generateToken(saved)).build());
+                                return userRepository.save(user).flatMap(this::issueTokensForUser);
                             });
                 });
     }
+
+    @Override
+    public Mono<AuthResponse> refresh(RefreshTokenRequest request) {
+        String presentedRefreshToken = request.getRefreshToken();
+        String[] parts = presentedRefreshToken.split("\\.", 2);
+        if (parts.length != 2) {
+            return Mono.error(new RuntimeException("Invalid refresh token"));
+        }
+        Long userId;
+        try {
+            userId = Long.valueOf(parts[0]);
+        } catch (NumberFormatException e) {
+            return Mono.error(new RuntimeException("Invalid refresh token"));
+        }
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new RuntimeException("Invalid refresh token")))
+                .flatMap(user -> {
+                    if (user.getRefreshTokenExpiresAt() == null || user.getRefreshTokenExpiresAt().isBefore(LocalDateTime.now())) {
+                        return Mono.error(new RuntimeException("Refresh token expired"));
+                    }
+                    if (user.getRefreshTokenHash() == null || !passwordEncoder.matches(presentedRefreshToken, user.getRefreshTokenHash())) {
+                        return Mono.error(new RuntimeException("Invalid refresh token"));
+                    }
+                    return rotateAndSaveRefreshToken(user).flatMap(this::buildAuthResponse);
+                });
+    }
+
+    private Mono<AuthResponse> issueTokensForUser(User user) {
+        return rotateAndSaveRefreshToken(user).flatMap(this::buildAuthResponse);
+    }
+
+    private Mono<UserWithRefresh> rotateAndSaveRefreshToken(User user) {
+        String newRefreshToken = generateRefreshTokenForUser(user.getUserId());
+        String newRefreshHash = passwordEncoder.encode(newRefreshToken);
+        user.setRefreshTokenHash(newRefreshHash);
+        user.setRefreshTokenExpiresAt(LocalDateTime.now().plusDays(DEFAULT_REFRESH_TOKEN_TTL_DAYS));
+        return userRepository.save(user).map(saved -> new UserWithRefresh(saved, newRefreshToken));
+    }
+
+    private Mono<AuthResponse> buildAuthResponse(UserWithRefresh pair) {
+        String accessToken = jwtUtil.generateToken(pair.user());
+        String refreshToken = pair.refreshToken();
+        return Mono.just(AuthResponse.builder()
+                .token(accessToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build());
+    }
+
+    private String generateRefreshTokenForUser(Long userId) {
+        byte[] bytes = new byte[48];
+        new SecureRandom().nextBytes(bytes);
+        String random = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        return userId + "." + random;
+    }
+
+    private record UserWithRefresh(User user, String refreshToken) {}
 }

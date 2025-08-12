@@ -16,7 +16,17 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
 
     /**
-     * The JSON Web Token (JWT) for the authenticated session.
+     * Backward-compatibility: same as accessToken
      */
     private String token;
+
+    /**
+     * Short-lived access token (JWT)
+     */
+    private String accessToken;
+
+    /**
+     * Long-lived opaque refresh token
+     */
+    private String refreshToken;
 } 
