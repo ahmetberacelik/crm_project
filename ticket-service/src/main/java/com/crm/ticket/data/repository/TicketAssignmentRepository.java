@@ -13,4 +13,6 @@ public interface TicketAssignmentRepository extends ReactiveCrudRepository<Ticke
     Mono<TicketAssignment> findFirstByTicketIdAndStatusAndIsInPool(Long ticketId, String status, boolean isInPool);
 
     Mono<TicketAssignment> findFirstByTicketIdAndPersonIdAndIsInPool(Long ticketId, Long personId, boolean isInPool);
+
+    Flux<TicketAssignment> findByDepartmentIdAndIsInPoolAndStatusOrderByAssignedDateDesc(Long departmentId, boolean isInPool, String status);
 }

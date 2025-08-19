@@ -2,14 +2,16 @@ import React from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getCategories } from '../../public/api/public.api';
 import { employeeTicketSchema, type EmployeeTicketFormValues } from '../validation/employeeTicket.schema';
-import { createEmployeeTicket } from '../api/tickets.api';
+import { createEmployeeTicket, type TicketResponse } from '../api/tickets.api';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 export const TicketForm: React.FC = () => {
   const { data: categories, isLoading, error } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
   const [info, setInfo] = React.useState<string | null>(null);
+  const navigate = useNavigate();
 
   const { control, register, handleSubmit, formState: { errors }, reset } = useForm<EmployeeTicketFormValues>({
     resolver: zodResolver(employeeTicketSchema),
@@ -18,7 +20,7 @@ export const TicketForm: React.FC = () => {
 
   const mutation = useMutation({
     mutationFn: createEmployeeTicket,
-    onSuccess: () => { setInfo('Ticket oluşturuldu.'); reset(); },
+    onSuccess: (created: TicketResponse) => { reset(); navigate(`/tickets/${created.id}`); },
     onError: (e: any) => setInfo(e?.response?.data?.message || 'İşlem başarısız'),
   });
 

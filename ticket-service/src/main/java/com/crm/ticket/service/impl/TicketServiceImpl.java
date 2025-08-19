@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -211,6 +212,26 @@ public class TicketServiceImpl implements TicketService {
                 })
                 // 6. Güncellenmiş ticket'ın tam yanıtını oluşturup dön
                 .flatMap(newAssignment -> getTicketById(newAssignment.getTicketId()));
+    }
+
+    @Override
+    public Flux<TicketResponse> getDepartmentPoolTickets(Long employeeId) {
+        // Token'ı context'ten al ve person bilgisini yükle
+        Mono<com.crm.ticket.infrastructure.client.dto.PersonResponse> personMono = Mono.deferContextual(ctx -> {
+            ServerWebExchange exchange = ctx.get(ServerWebExchange.class);
+            String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header"));
+            }
+            String token = authHeader.substring(7);
+            return departmentClient.getPersonById(employeeId, token);
+        }).switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee details not found for id: " + employeeId)));
+
+        return personMono.flatMapMany(person ->
+                ticketAssignmentRepository
+                        .findByDepartmentIdAndIsInPoolAndStatusOrderByAssignedDateDesc(person.getDepartmentId(), true, "OPEN")
+                        .flatMap(assignment -> getTicketById(assignment.getTicketId()))
+        );
     }
 
     /**

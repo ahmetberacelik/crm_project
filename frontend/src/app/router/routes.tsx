@@ -2,10 +2,14 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { HomePage } from '../../pages/HomePage';
+import { LandingPage } from '../../pages/LandingPage';
 import { AuthGuard } from './guards/AuthGuard';
 import { RoleGuard } from './guards/RoleGuard';
 import { CreatePublicTicketPage } from '../../features/public/pages/CreatePublicTicketPage';
 import { CreateEmployeeTicketPage } from '../../features/tickets/pages/CreateEmployeeTicketPage';
+import { TicketDetailPage } from '../../features/tickets/pages/TicketDetailPage';
+import { MyAssignmentsPage } from '../../features/tickets/pages/MyAssignmentsPage';
+import { DepartmentPoolPage } from '../../features/tickets/pages/DepartmentPoolPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -22,7 +26,37 @@ export const AppRoutes: React.FC = () => {
           </AuthGuard>
         }
       />
-      <Route path="/" element={<HomePage />} />
+      <Route
+        path="/tickets/:id"
+        element={
+          <AuthGuard>
+            <RoleGuard allow={["ROLE_USER", "ROLE_ADMIN"] as any}>
+              <TicketDetailPage />
+            </RoleGuard>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/tickets/my"
+        element={
+          <AuthGuard>
+            <RoleGuard allow={["ROLE_USER", "ROLE_ADMIN"] as any}>
+              <MyAssignmentsPage />
+            </RoleGuard>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/tickets/pool"
+        element={
+          <AuthGuard>
+            <RoleGuard allow={["ROLE_USER", "ROLE_ADMIN"] as any}>
+              <DepartmentPoolPage />
+            </RoleGuard>
+          </AuthGuard>
+        }
+      />
+      <Route path="/" element={<LandingPage />} />
       {/* Örnek korumalı rota (ileride sayfa eklenecek) */}
       <Route
         path="/protected"

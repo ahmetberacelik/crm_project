@@ -4,6 +4,7 @@ import com.crm.ticket.api.dto.request.CreateTicketEmployeeRequest;
 import com.crm.ticket.api.dto.request.CreateTicketPublicRequest;
 import com.crm.ticket.api.dto.response.TicketResponse;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 // Not: Güvenlik için Principal nesnesini daha sonra ekleyeceğiz.
 public interface TicketService {
@@ -35,4 +36,6 @@ public interface TicketService {
     Mono<TicketResponse> closeTicket(Long ticketId, Long employeeId);
 
     Mono<TicketResponse> reassignTicket(Long ticketId, Long newDepartmentId, Long employeeId);
+
+    Flux<TicketResponse> getDepartmentPoolTickets(Long employeeId);
 }

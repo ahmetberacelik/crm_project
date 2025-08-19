@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -99,5 +100,12 @@ public class TicketController {
 
         Long employeeId = Long.valueOf(employeeIdStr);
         return ticketService.reassignTicket(ticketId, request.getNewDepartmentId(), employeeId);
+    }
+
+    @GetMapping("/pool")
+    @PreAuthorize("hasRole('USER')")
+    public Flux<TicketResponse> getDepartmentPool(@AuthenticationPrincipal String employeeIdStr) {
+        Long employeeId = Long.valueOf(employeeIdStr);
+        return ticketService.getDepartmentPoolTickets(employeeId);
     }
 }
