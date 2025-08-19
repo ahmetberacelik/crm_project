@@ -16,7 +16,7 @@ export const DepartmentPoolPage: React.FC = () => {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Departman Havuzu</Typography>
+      <Typography variant="h6">Ticket'lar</Typography>
       <TicketsTable items={data ?? []} />
       <Pagination page={page + 1} onChange={(_, p) => setPage(p - 1)} count={10} />
     </Stack>

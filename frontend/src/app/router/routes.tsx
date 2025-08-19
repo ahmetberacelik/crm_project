@@ -5,6 +5,7 @@ import { HomePage } from '../../pages/HomePage';
 import { LandingPage } from '../../pages/LandingPage';
 import { AuthGuard } from './guards/AuthGuard';
 import { RoleGuard } from './guards/RoleGuard';
+import { PublicOnlyGuard } from './guards/PublicOnlyGuard';
 import { CreatePublicTicketPage } from '../../features/public/pages/CreatePublicTicketPage';
 import { CreateEmployeeTicketPage } from '../../features/tickets/pages/CreateEmployeeTicketPage';
 import { TicketDetailPage } from '../../features/tickets/pages/TicketDetailPage';
@@ -15,7 +16,7 @@ export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/public/tickets/create" element={<CreatePublicTicketPage />} />
+      <Route path="/public/tickets/create" element={<PublicOnlyGuard><CreatePublicTicketPage /></PublicOnlyGuard>} />
       <Route
         path="/tickets/create"
         element={

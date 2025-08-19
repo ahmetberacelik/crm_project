@@ -1,10 +1,11 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, Stack } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Stack, IconButton } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../../features/auth/api/auth.api';
 import { useAuthStore } from '../../../shared/stores/auth.store';
 
-export const Header: React.FC = () => {
+export const Header: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn());
 
@@ -16,19 +17,11 @@ export const Header: React.FC = () => {
   return (
     <AppBar position="static">
       <Toolbar>
+        <IconButton color="inherit" sx={{ mr: 1, display: { xs: 'inline-flex', md: 'none' } }} onClick={onMenuClick}>
+          <MenuIcon />
+        </IconButton>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, cursor: 'pointer' }} onClick={() => navigate('/')}>CRM</Typography>
-        <Stack direction="row" spacing={1}>
-          {!isLoggedIn && (
-            <Button color="inherit" onClick={() => navigate('/public/tickets/create')}>Public Ticket</Button>
-          )}
-          {isLoggedIn && (
-            <>
-              <Button color="inherit" onClick={() => navigate('/tickets/create')}>Ticket Oluştur</Button>
-              <Button color="inherit" onClick={() => navigate('/tickets/my')}>Benim Üstlendiklerim</Button>
-              <Button color="inherit" onClick={() => navigate('/tickets/pool')}>Departman Havuzu</Button>
-            </>
-          )}
-        </Stack>
+        <Stack direction="row" spacing={1}></Stack>
         <Box sx={{ ml: 2 }}>
           {!isLoggedIn ? (
             <Button color="inherit" onClick={() => navigate('/login')}>Giriş Yap</Button>

@@ -9,21 +9,7 @@ export const HomePage: React.FC = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn());
   return (
     <AppLayout>
-      <Stack spacing={2}>
-        <Typography variant="h5">Hoş geldiniz</Typography>
-        {!isLoggedIn ? (
-          <Stack direction="row" spacing={1}>
-            <Button variant="contained" onClick={() => navigate('/public/tickets/create')}>Public Ticket Oluştur</Button>
-            <Button variant="outlined" onClick={() => navigate('/login')}>Giriş Yap</Button>
-          </Stack>
-        ) : (
-          <Stack direction="row" spacing={1}>
-            <Button variant="contained" onClick={() => navigate('/tickets/create')}>Ticket Oluştur</Button>
-            <Button variant="outlined" onClick={() => navigate('/tickets/my')}>Benim Üstlendiklerim</Button>
-            <Button variant="outlined" onClick={() => navigate('/tickets/pool')}>Departman Havuzu</Button>
-          </Stack>
-        )}
-      </Stack>
+      <Stack spacing={2}></Stack>
     </AppLayout>
   );
 };
