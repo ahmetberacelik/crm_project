@@ -234,6 +234,13 @@ public class TicketServiceImpl implements TicketService {
         );
     }
 
+    @Override
+    public Flux<TicketResponse> getMyAssignments(Long employeeId) {
+        return ticketAssignmentRepository
+                .findByPersonIdAndIsInPoolAndStatusOrderByAssignedDateDesc(employeeId, false, "IN_PROGRESS")
+                .flatMap(assignment -> getTicketById(assignment.getTicketId()));
+    }
+
     /**
      * Assembles the full TicketResponse by fetching additional data from other services.
      * This method is now the core of the service's read logic.

@@ -38,4 +38,6 @@ public interface TicketService {
     Mono<TicketResponse> reassignTicket(Long ticketId, Long newDepartmentId, Long employeeId);
 
     Flux<TicketResponse> getDepartmentPoolTickets(Long employeeId);
+
+    Flux<TicketResponse> getMyAssignments(Long employeeId);
 }

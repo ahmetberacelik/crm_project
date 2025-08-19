@@ -18,7 +18,7 @@ export const HomePage: React.FC = () => {
           </Stack>
         ) : (
           <Stack direction="row" spacing={1}>
-            <Button variant="contained" onClick={() => navigate('/tickets/create')}>Çalışan Ticket Oluştur</Button>
+            <Button variant="contained" onClick={() => navigate('/tickets/create')}>Ticket Oluştur</Button>
             <Button variant="outlined" onClick={() => navigate('/tickets/my')}>Benim Üstlendiklerim</Button>
             <Button variant="outlined" onClick={() => navigate('/tickets/pool')}>Departman Havuzu</Button>
           </Stack>

@@ -1,8 +1,8 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getTicketById } from '../api/tickets.api';
-import { Alert, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { claimTicket, closeTicket, getTicketById, reassignTicket } from '../api/tickets.api';
+import { Alert, Card, CardActions, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Button, Typography } from '@mui/material';
 
 export const TicketDetailPage: React.FC = () => {
   const params = useParams();
@@ -14,13 +14,36 @@ export const TicketDetailPage: React.FC = () => {
     enabled: Number.isFinite(id),
   });
 
+  const qc = useQueryClient();
+  const [openReassign, setOpenReassign] = React.useState(false);
+  const [deptId, setDeptId] = React.useState<string>('');
+  const navigate = useNavigate();
+
+  const claimMut = useMutation({
+    mutationFn: () => claimTicket(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ticket', id] }),
+  });
+  const closeMut = useMutation({
+    mutationFn: () => closeTicket(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ticket', id] }),
+  });
+  const reassignMut = useMutation({
+    mutationFn: () => reassignTicket(id, Number(deptId)),
+    onSuccess: () => { setOpenReassign(false); setDeptId(''); qc.invalidateQueries({ queryKey: ['ticket', id] }); },
+  });
+
   if (!Number.isFinite(id)) return <Alert severity="error">Geçersiz ID</Alert>;
   if (isLoading) return <div>Yükleniyor...</div>;
   if (error) return <Alert severity="error">Ticket yüklenemedi.</Alert>;
   if (!data) return <Alert severity="warning">Kayıt bulunamadı.</Alert>;
 
   return (
+    <>
     <Card>
+      <CardActions sx={{ px: 2, pt: 2, justifyContent: 'space-between' }}>
+        <Button size="small" onClick={() => navigate(-1)}>Geri</Button>
+        <Button size="small" onClick={() => navigate('/')}>Ana Menü</Button>
+      </CardActions>
       <CardContent>
         <Stack spacing={1}>
           <Typography variant="h6">Ticket #{data.id}</Typography>
@@ -40,7 +63,24 @@ export const TicketDetailPage: React.FC = () => {
           </Stack>
         </Stack>
       </CardContent>
+      <CardActions sx={{ px: 2, pb: 2 }}>
+        <Button variant="contained" size="small" onClick={() => claimMut.mutate()} disabled={claimMut.isPending}>Üstlen</Button>
+        <Button variant="outlined" size="small" onClick={() => closeMut.mutate()} disabled={closeMut.isPending}>Kapat</Button>
+        <Button variant="text" size="small" onClick={() => setOpenReassign(true)}>Yönlendir</Button>
+      </CardActions>
     </Card>
+
+    <Dialog open={openReassign} onClose={() => setOpenReassign(false)}>
+      <DialogTitle>Departmana Yönlendir</DialogTitle>
+      <DialogContent>
+        <TextField label="Yeni Departman ID" type="number" value={deptId} onChange={(e) => setDeptId(e.target.value)} sx={{ mt: 1 }} fullWidth />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setOpenReassign(false)}>İptal</Button>
+        <Button onClick={() => reassignMut.mutate()} disabled={!deptId || reassignMut.isPending}>Gönder</Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 };
 

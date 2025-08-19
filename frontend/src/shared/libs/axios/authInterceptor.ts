@@ -1,6 +1,7 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { userApi, departmentApi, ticketApi, bareUserApi } from './axiosClient';
 import { useAuthStore } from '../../stores/auth.store';
+import { jwtDecode } from 'jwt-decode';
 
 function attachAuthHeader(config: InternalAxiosRequestConfig, token: string | null) {
   if (token) {
@@ -27,8 +28,29 @@ async function refreshTokenFlow(): Promise<boolean> {
   return false;
 }
 
+type JwtPayload = { exp?: number };
+function isExpiringSoon(token: string | null, skewMs = 60_000): boolean {
+  if (!token) return false;
+  try {
+    const { exp } = jwtDecode<JwtPayload>(token);
+    if (!exp) return false;
+    const expiresAtMs = exp * 1000;
+    return Date.now() + skewMs >= expiresAtMs;
+  } catch { return false; }
+}
+
+let refreshingPromise: Promise<boolean> | null = null;
+async function ensureFreshAccessToken(): Promise<void> {
+  if (!isExpiringSoon(useAuthStore.getState().accessToken)) return;
+  if (!refreshingPromise) {
+    refreshingPromise = refreshTokenFlow().finally(() => { refreshingPromise = null; });
+  }
+  await refreshingPromise;
+}
+
 function setupClient(client: AxiosInstance) {
-  client.interceptors.request.use((config) => {
+  client.interceptors.request.use(async (config) => {
+    await ensureFreshAccessToken();
     const { accessToken } = useAuthStore.getState();
     return attachAuthHeader(config, accessToken);
   });

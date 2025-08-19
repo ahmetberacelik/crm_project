@@ -108,4 +108,11 @@ public class TicketController {
         Long employeeId = Long.valueOf(employeeIdStr);
         return ticketService.getDepartmentPoolTickets(employeeId);
     }
+
+    @GetMapping("/my-assignments")
+    @PreAuthorize("hasRole('USER')")
+    public Flux<TicketResponse> getMyAssignments(@AuthenticationPrincipal String employeeIdStr) {
+        Long employeeId = Long.valueOf(employeeIdStr);
+        return ticketService.getMyAssignments(employeeId);
+    }
 }

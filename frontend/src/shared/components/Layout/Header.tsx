@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
           )}
           {isLoggedIn && (
             <>
-              <Button color="inherit" onClick={() => navigate('/tickets/create')}>Çalışan Ticket</Button>
+              <Button color="inherit" onClick={() => navigate('/tickets/create')}>Ticket Oluştur</Button>
               <Button color="inherit" onClick={() => navigate('/tickets/my')}>Benim Üstlendiklerim</Button>
               <Button color="inherit" onClick={() => navigate('/tickets/pool')}>Departman Havuzu</Button>
             </>

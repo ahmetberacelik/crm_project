@@ -51,13 +51,28 @@ export type TicketQuery = {
 
 export async function getMyAssignments(params: TicketQuery = {}) {
   const { page = 0, size = 20, sort = 'createdDate,desc' } = params;
-  const res = await ticketApi.get<TicketResponse[]>(`/api/tickets/assignments/mine`, { params: { page, size, sort } });
+  const res = await ticketApi.get<TicketResponse[]>(`/api/tickets/my-assignments`, { params: { page, size, sort } });
   return res.data;
 }
 
 export async function getDepartmentPool(params: TicketQuery = {}) {
   const { page = 0, size = 20, sort = 'createdDate,desc' } = params;
   const res = await ticketApi.get<TicketResponse[]>(`/api/tickets/pool`, { params: { page, size, sort } });
+  return res.data;
+}
+
+export async function claimTicket(ticketId: number) {
+  const res = await ticketApi.post<TicketResponse>(`/api/tickets/${ticketId}/assignments/claim`);
+  return res.data;
+}
+
+export async function closeTicket(ticketId: number) {
+  const res = await ticketApi.post<TicketResponse>(`/api/tickets/${ticketId}/assignments/close`);
+  return res.data;
+}
+
+export async function reassignTicket(ticketId: number, newDepartmentId: number) {
+  const res = await ticketApi.post<TicketResponse>(`/api/tickets/${ticketId}/assignments/reassign`, { newDepartmentId });
   return res.data;
 }
 
