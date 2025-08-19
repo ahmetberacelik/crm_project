@@ -4,11 +4,24 @@ import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { HomePage } from '../../pages/HomePage';
 import { AuthGuard } from './guards/AuthGuard';
 import { RoleGuard } from './guards/RoleGuard';
+import { CreatePublicTicketPage } from '../../features/public/pages/CreatePublicTicketPage';
+import { CreateEmployeeTicketPage } from '../../features/tickets/pages/CreateEmployeeTicketPage';
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/public/tickets/create" element={<CreatePublicTicketPage />} />
+      <Route
+        path="/tickets/create"
+        element={
+          <AuthGuard>
+            <RoleGuard allow={["ROLE_USER", "ROLE_ADMIN"] as any}>
+              <CreateEmployeeTicketPage />
+            </RoleGuard>
+          </AuthGuard>
+        }
+      />
       <Route path="/" element={<HomePage />} />
       {/* Örnek korumalı rota (ileride sayfa eklenecek) */}
       <Route

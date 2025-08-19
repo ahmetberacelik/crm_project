@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../../../../src/features/auth/api/auth.api';
+import { logout } from '../../../features/auth/api/auth.api';
 import { useAuthStore } from '../../../shared/stores/auth.store';
 
 export const Header: React.FC = () => {
