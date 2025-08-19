@@ -10,9 +10,9 @@ export const Sidebar: React.FC<{ mobileOpen?: boolean; onClose?: () => void; wid
   const { pathname } = useLocation();
 
   const items = [
-    { label: 'Ticket Oluştur', path: '/tickets/create' },
-    { label: 'Benim Üstlendiklerim', path: '/tickets/my' },
-    { label: 'Departman Havuzu', path: '/tickets/pool' },
+    { label: 'Ticket Oluştur', view: 'create' },
+    { label: 'Benim Üstlendiklerim', view: 'my' },
+    { label: 'Departman Havuzu', view: 'pool' },
   ];
 
   const content = (
@@ -24,9 +24,9 @@ export const Sidebar: React.FC<{ mobileOpen?: boolean; onClose?: () => void; wid
       <List sx={{ color: '#fff' }}>
         {items.map((it) => (
           <ListItemButton
-            key={it.path}
-            selected={pathname.startsWith(it.path)}
-            onClick={() => { navigate(it.path); onClose?.(); }}
+            key={it.view}
+            selected={new URLSearchParams(location.search).get('view') === it.view && pathname === '/'}
+            onClick={() => { navigate({ pathname: '/', search: `?view=${it.view}` }); onClose?.(); }}
             sx={{
               '&.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.15)' },
               '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
@@ -34,7 +34,7 @@ export const Sidebar: React.FC<{ mobileOpen?: boolean; onClose?: () => void; wid
             }}
           >
             <ListItemIcon sx={{ color: '#fff', minWidth: 36 }}>
-              {it.path.includes('/create') ? <AddCircleOutlineIcon /> : it.path.includes('/my') ? <AssignmentIndIcon /> : <InventoryIcon />}
+              {it.view === 'create' ? <AddCircleOutlineIcon /> : it.view === 'my' ? <AssignmentIndIcon /> : <InventoryIcon />}
             </ListItemIcon>
             <ListItemText primary={it.label} />
           </ListItemButton>
