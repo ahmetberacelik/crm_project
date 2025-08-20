@@ -2,7 +2,9 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { claimTicket, closeTicket, getTicketById, reassignTicket } from '../api/tickets.api';
-import { Alert, Card, CardActions, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Button, Typography } from '@mui/material';
+import { Alert, Card, CardActions, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Button, Typography, Autocomplete } from '@mui/material';
+import { useQuery as useRQ } from '@tanstack/react-query';
+import { getDepartmentsTree, type DepartmentItem } from '../../departments/api/departments.api';
 
 export const TicketDetailPage: React.FC = () => {
   const params = useParams();
@@ -17,6 +19,7 @@ export const TicketDetailPage: React.FC = () => {
   const qc = useQueryClient();
   const [openReassign, setOpenReassign] = React.useState(false);
   const [deptId, setDeptId] = React.useState<string>('');
+  const deptsQ = useRQ({ queryKey: ['departments'], queryFn: getDepartmentsTree });
   const navigate = useNavigate();
 
   const claimMut = useMutation({
@@ -73,7 +76,12 @@ export const TicketDetailPage: React.FC = () => {
     <Dialog open={openReassign} onClose={() => setOpenReassign(false)}>
       <DialogTitle>Departmana Yönlendir</DialogTitle>
       <DialogContent>
-        <TextField label="Yeni Departman ID" type="number" value={deptId} onChange={(e) => setDeptId(e.target.value)} sx={{ mt: 1 }} fullWidth />
+        <Autocomplete
+          options={deptsQ.data ?? []}
+          getOptionLabel={(o: DepartmentItem) => o.name}
+          loading={deptsQ.isLoading}
+          onChange={(_, val) => setDeptId(val ? String(val.departmentId) : '')}
+          renderInput={(params) => <TextField {...params} label="Yeni Departman" sx={{ mt: 1 }} fullWidth />} />
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setOpenReassign(false)}>İptal</Button>

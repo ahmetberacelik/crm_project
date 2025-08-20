@@ -11,6 +11,8 @@ import { CreateEmployeeTicketPage } from '../../features/tickets/pages/CreateEmp
 import { TicketDetailPage } from '../../features/tickets/pages/TicketDetailPage';
 import { MyAssignmentsPage } from '../../features/tickets/pages/MyAssignmentsPage';
 import { DepartmentPoolPage } from '../../features/tickets/pages/DepartmentPoolPage';
+import { ProfilePage } from '../../features/profile/pages/ProfilePage';
+import { AdminCategoriesPage } from '../../features/admin/categories/pages/AdminCategoriesPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -53,6 +55,26 @@ export const AppRoutes: React.FC = () => {
           <AuthGuard>
             <RoleGuard allow={["ROLE_USER", "ROLE_ADMIN"] as any}>
               <DepartmentPoolPage />
+            </RoleGuard>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <AuthGuard>
+            <RoleGuard allow={["ROLE_USER", "ROLE_ADMIN"] as any}>
+              <ProfilePage />
+            </RoleGuard>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/admin/categories"
+        element={
+          <AuthGuard>
+            <RoleGuard allow={["ROLE_ADMIN"] as any}>
+              <AdminCategoriesPage />
             </RoleGuard>
           </AuthGuard>
         }
