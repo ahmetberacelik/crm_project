@@ -6,6 +6,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CategoryIcon from '@mui/icons-material/Category';
 import ApartmentIcon from '@mui/icons-material/Apartment';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/stores/auth.store';
 
@@ -62,6 +63,10 @@ export const Sidebar: React.FC<{ mobileOpen?: boolean; onClose?: () => void; wid
 						<ListItemButton onClick={() => { navigate({ pathname: '/', search: '?view=admin-departments' }); onClose?.(); }}>
 							<ListItemIcon sx={{ color: '#fff', minWidth: 36 }}><ApartmentIcon /></ListItemIcon>
 							<ListItemText primary="Departmanlar" />
+						</ListItemButton>
+						<ListItemButton onClick={() => { navigate({ pathname: '/', search: '?view=admin-users' }); onClose?.(); }}>
+							<ListItemIcon sx={{ color: '#fff', minWidth: 36 }}><PeopleAltIcon /></ListItemIcon>
+							<ListItemText primary="Kullanıcılar" />
 						</ListItemButton>
 					</List>
 				</>

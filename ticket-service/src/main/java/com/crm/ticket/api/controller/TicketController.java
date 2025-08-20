@@ -33,7 +33,7 @@ public class TicketController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<TicketResponse> createEmployeeTicket(
             @Valid @RequestBody CreateTicketEmployeeRequest request,
             @AuthenticationPrincipal String username // DOĞRUSU: String bekleniyor
@@ -47,7 +47,7 @@ public class TicketController {
      * ID'ye göre bir ticket'ın detaylarını getirir. Sadece çalışanlar erişebilir.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<TicketResponse> getTicketById(@PathVariable Long id) {
         return ticketService.getTicketById(id);
     }
@@ -59,7 +59,7 @@ public class TicketController {
      * @return Güncellenmiş TicketResponse.
      */
     @PostMapping("/{ticketId}/assignments/claim")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<TicketResponse> claimTicket(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal String employeeIdStr) {
@@ -75,7 +75,7 @@ public class TicketController {
      * @return Güncellenmiş TicketResponse.
      */
     @PostMapping("/{ticketId}/assignments/close")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<TicketResponse> closeTicket(
             @PathVariable Long ticketId,
             @AuthenticationPrincipal String employeeIdStr) {
@@ -92,7 +92,7 @@ public class TicketController {
      * @return Güncellenmiş TicketResponse.
      */
     @PostMapping("/{ticketId}/assignments/reassign")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Mono<TicketResponse> reassignTicket(
             @PathVariable Long ticketId,
             @Valid @RequestBody ReassignTicketRequest request,
@@ -103,14 +103,14 @@ public class TicketController {
     }
 
     @GetMapping("/pool")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Flux<TicketResponse> getDepartmentPool(@AuthenticationPrincipal String employeeIdStr) {
         Long employeeId = Long.valueOf(employeeIdStr);
         return ticketService.getDepartmentPoolTickets(employeeId);
     }
 
     @GetMapping("/my-assignments")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Flux<TicketResponse> getMyAssignments(@AuthenticationPrincipal String employeeIdStr) {
         Long employeeId = Long.valueOf(employeeIdStr);
         return ticketService.getMyAssignments(employeeId);
