@@ -6,6 +6,8 @@ import { useAuthStore } from '../shared/stores/auth.store';
 import { CreateEmployeeTicketPage } from '../features/tickets/pages/CreateEmployeeTicketPage';
 import { MyAssignmentsPage } from '../features/tickets/pages/MyAssignmentsPage';
 import { DepartmentPoolPage } from '../features/tickets/pages/DepartmentPoolPage';
+import { AdminCategoriesPage } from '../features/admin/categories/pages/AdminCategoriesPage';
+import { AdminDepartmentsPage } from '../features/admin/departments/pages/AdminDepartmentsPage';
 
 export const HomePage: React.FC = () => {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn());
@@ -21,6 +23,10 @@ export const HomePage: React.FC = () => {
         return <MyAssignmentsPage />;
       case 'pool':
         return <DepartmentPoolPage />;
+      case 'admin-categories':
+        return <AdminCategoriesPage />;
+      case 'admin-departments':
+        return <AdminDepartmentsPage />;
       default:
         return <></>;
     }

@@ -5,6 +5,7 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CategoryIcon from '@mui/icons-material/Category';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../shared/stores/auth.store';
 
@@ -54,9 +55,13 @@ export const Sidebar: React.FC<{ mobileOpen?: boolean; onClose?: () => void; wid
 						<Typography variant="body2" sx={{ color: '#fff', opacity: 0.9 }}>Admin</Typography>
 					</Toolbar>
 					<List sx={{ color: '#fff' }}>
-						<ListItemButton onClick={() => { navigate('/admin/categories'); onClose?.(); }}>
+						<ListItemButton onClick={() => { navigate({ pathname: '/', search: '?view=admin-categories' }); onClose?.(); }}>
 							<ListItemIcon sx={{ color: '#fff', minWidth: 36 }}><CategoryIcon /></ListItemIcon>
 							<ListItemText primary="Kategoriler" />
+						</ListItemButton>
+						<ListItemButton onClick={() => { navigate({ pathname: '/', search: '?view=admin-departments' }); onClose?.(); }}>
+							<ListItemIcon sx={{ color: '#fff', minWidth: 36 }}><ApartmentIcon /></ListItemIcon>
+							<ListItemText primary="Departmanlar" />
 						</ListItemButton>
 					</List>
 				</>
