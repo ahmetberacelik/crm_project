@@ -13,7 +13,8 @@ import {
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import type { TicketResponse } from '../api/tickets.api';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { TicketDetailDialog } from './TicketDetailDialog';
 
 function priorityColor(priority?: string) {
   switch ((priority || '').toUpperCase()) {
@@ -29,7 +30,7 @@ function priorityColor(priority?: string) {
 }
 
 export const TicketsTable: React.FC<{ items: TicketResponse[] }> = ({ items }) => {
-  const navigate = useNavigate();
+  const [openId, setOpenId] = useState<number | null>(null);
 
   return (
     <TableContainer component={Paper} elevation={2}>
@@ -66,7 +67,7 @@ export const TicketsTable: React.FC<{ items: TicketResponse[] }> = ({ items }) =
                 </TableCell>
                 <TableCell align="right">
                   <Tooltip title="Detay">
-                    <IconButton size="small" onClick={() => navigate(`/tickets/${t.id}`)}>
+                    <IconButton size="small" onClick={() => setOpenId(t.id)}>
                       <VisibilityIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -76,6 +77,7 @@ export const TicketsTable: React.FC<{ items: TicketResponse[] }> = ({ items }) =
           })}
         </TableBody>
       </Table>
+      <TicketDetailDialog open={openId !== null} onClose={() => setOpenId(null)} ticketId={openId} />
     </TableContainer>
   );
 };
