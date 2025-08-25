@@ -18,14 +18,14 @@ function asNonEmpty(value: unknown, varName: string): NonEmptyString {
   return value as NonEmptyString;
 }
 
-export const USER_API_URL = asNonEmpty(import.meta.env.VITE_USER_API_URL, 'VITE_USER_API_URL');
-export const DEPARTMENT_API_URL = asNonEmpty(import.meta.env.VITE_DEPARTMENT_API_URL, 'VITE_DEPARTMENT_API_URL');
-export const TICKET_API_URL = asNonEmpty(import.meta.env.VITE_TICKET_API_URL, 'VITE_TICKET_API_URL');
+// Ingress: single entrypoint for all services
+export const API_BASE_URL = asNonEmpty(import.meta.env.VITE_API_BASE_URL, 'VITE_API_BASE_URL');
 
+// Keep existing shape to avoid widespread refactors; all point to the same base
 export const API_URLS = {
-  user: USER_API_URL,
-  department: DEPARTMENT_API_URL,
-  ticket: TICKET_API_URL,
+  user: API_BASE_URL,
+  department: API_BASE_URL,
+  ticket: API_BASE_URL,
 } as const;
 
 
